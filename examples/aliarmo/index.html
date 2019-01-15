@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Vue.js wrapper component example (jquery plugin: select2)</title>
+    <!-- Delete ".min" for console warnings in development -->
+    <script src="../../dist/vue.js"></script>
+    <script src="https://unpkg.com/jquery"></script>
+    <script src="https://unpkg.com/select2@4.0.3"></script>
+    <link href="https://unpkg.com/select2@4.0.3/dist/css/select2.min.css" rel="stylesheet">
+    <style>
+      html, body {
+        font: 13px/18px sans-serif;
+      }
+      select {
+        min-width: 300px;
+      }
+    </style>
+  </head>
+  <body>
+
+    <div id="el">
+    </div>
+
+    <!-- using string template here to work around HTML <option> placement restriction -->
+    <!-- (function anonymous(
+    ) {
+    with(this){return _c('div',{staticClass:"container"},[_c('p',[_v("Selected: "+_s(selected))]),_v(" "),_c('select2',{attrs:{"options":options},model:{value:(selected),callback:function ($$v) {selected=$$v},expression:"selected"}},[_c('option',{attrs:{"disabled":"","value":"0"}},[_v("Select one")])]),_v(" "),_c('MyComp',{attrs:{"myData":myData,"title":"啦啦啦啦啦"}})],1)}
+    }) -->
+    <script type="text/x-template" id="demo-template">
+      <div class="container">
+        <p>Selected: {{ selected }}</p>
+        <select2 :options="options" v-model="selected">
+          <option disabled value="0">Select one</option>
+        </select2>
+        <MyComp :myData="myData"
+                title="啦啦啦啦啦"></MyComp>
+      </div>
+    </script>
+
+    <script type="text/x-template" id="select2-template">
+      <div>
+        <select>
+          <slot></slot>
+        </select>
+      </div>
+    </script>
+    <script type="text/x-template" id="MyComp-template">
+      <div>
+       myData.name: <p @click="onClick">{{myData.name}}</p>
+       title: <p>{{title}}</p>
+       fromSelf: <p>{{fromSelf}}</p>
+       <SubComp></SubComp>
+      </div>
+    </script>
+    <script type="text/x-template" id="SubComp-template">
+      <div>
+       Sub=>CompfromSelf: <p>{{fromSelf}}</p>
+      </div>
+    </script>
+    <script type="text/x-template" id="TestComp-Template">
+      <div class="TestComp">
+        <p class="TestComp-P" @click="onClick">{{username}}:{{password}}</p>
+      </div>
+    </script>
+    <script type="text/x-template" id="Test-Template">
+      <div>
+        <div class="Test" v-if="isShow">
+          {{username}}:{{password}}
+        </div>
+        <TestComp :username="username"
+                  :password="password"></TestComp>
+        <button @click="toggle"></button>
+      </div>
+    </script>
+    <script>
+    //   Vue.config.performance
+    //   Vue.component('SubComp',{
+    //     props:[],
+    //     data(){
+    //       return {
+    //         fromSelf:'SubComp哈哈哈哈'
+    //       }
+    //     },
+    //     template:'#SubComp-template',
+    //     methods:{
+    //       onClick(){
+    //         alert("SubComp你点我了")
+    //       }
+    //     },
+    //     beforeCreate(){
+    //       console.log("SubComp",'beforeCreate')
+    //     },
+    //     created(){
+    //       console.log("SubComp",'created')
+    //     },
+    //     beforeMount(){
+    //       console.log("SubComp",'beforeMount')
+    //     },
+    //     mounted(){
+    //       console.log("SubComp",'mounted')
+    //     }
+    //   })
+    //   // 传入的options会挂载到这个组件实例的constructor上，vm.constructor.options
+    //   Vue.component('MyComp',{
+    //     props:['myData','title'],
+    //     data(){
+    //       return {
+    //         fromSelf:'哈哈哈哈'
+    //       }
+    //     },
+    //     template:'#MyComp-template',
+    //     methods:{
+    //       onClick(){
+    //         alert("你点我了")
+    //       }
+    //     },
+    //     beforeCreate(){
+    //       console.log("MyComp",'beforeCreate')
+    //     },
+    //     created(){
+    //       console.log("MyComp",'created')
+    //     },
+    //     beforeMount(){
+    //       console.log("MyComp",'beforeMount')
+    //     },
+    //     mounted(){
+    //       console.log("MyComp",'mounted')
+    //     }
+    //   })
+
+    // var cvm=Vue.component('select2', {
+    //   inject:['injected'],
+    //   props: ['options', 'value'],
+    //   template: '#select2-template',
+    //   mounted: function () {
+    //     var vm = this
+    //     console.log("injected",this.injected)
+    //     $(this.$el)
+    //       .val(this.value)
+    //       // init select2
+    //       .select2({ data: this.options })
+    //       // emit event on change.
+    //       .on('change', function () {
+    //         vm.$emit('input', this.value)
+    //       })
+    //   },
+    //   watch: {
+    //     value: function (value) {
+    //       // update value
+    //       $(this.$el).val(value).trigger('change')
+    //     },
+    //     options: function (options) {
+    //       // update options
+    //       $(this.$el).select2({ data: options })
+    //     }
+    //   },
+    //   destroyed: function () {
+    //     $(this.$el).off().select2('destroy')
+    //   }
+    // })
+    // console.log("cvm",cvm)
+    // var vm = new Vue({
+    //   el: '#el',
+    //   template: '#demo-template',
+    //   provide:{
+    //     injected:'啦啦啦啦啦啦'
+    //   },
+    //   data: {
+    //     selected: 0,
+    //     options: [
+    //       { id: 1, text: 'Hello' },
+    //       { id: 2, text: 'World' }
+    //     ],
+    //     myData:{
+    //       name:"aliarmo"
+    //     }
+    //   }
+    // })
+    // console.log("VM",vm)
+    Vue.component('TestComp',{
+      props:['username','password'],
+      template:'#TestComp-Template',
+      data(){
+        return {
+          title:'用户信息'
+        }
+      },
+      methods:{
+        onClick(){
+          this.$emit('click')
+        }
+      }
+    })
+    // 1、new Vue
+    // 2、执行beforeCreate和created，执行$mount，然后会执行mountComponent
+    // 3、将template编译成render和renderStatic函数，具体render函数能做啥，再看
+    // 4、$mount，然后new Watcher，并执行updateComponent，执行render生成vnode
+    // 5、执行patch，patch会创建当前vnode对应的dom，如果这个vnode有孩子的话，遍历这些孩子vnode
+    //    如果是组件vnode的话，则重复上述new Vue过程，非组件vnode，创建dom，append到父元素里面
+    
+    new Vue({
+      el:'#el',
+      template:'#Test-Template',
+      data:{
+        username:"aliarmo",
+        password:'123456',
+        isShow:false
+      },
+      created(){
+        setTimeout(()=>{
+          this.username='shaniawei'
+          this.password="11111"
+        },0)
+      },
+      methods:{
+        onClick(){
+          alert('你点我了')
+        },
+        toggle(){
+          this.isShow=!this.isShow
+        }
+      }
+    })
+    </script>
+  </body>
+</html>
