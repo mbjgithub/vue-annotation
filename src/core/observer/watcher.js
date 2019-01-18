@@ -22,6 +22,7 @@ let uid = 0
  * A watcher parses an expression, collects dependencies,
  * and fires callback when the expression value changes.
  * This is used for both the $watch() api and directives.
+ * 观察者，用户观察目标对象的变动，以通知其他的对象
  */
 export default class Watcher {
   vm: Component;
@@ -42,18 +43,24 @@ export default class Watcher {
   getter: Function;
   value: any;
 
-  constructor (
-    vm: Component,
-    expOrFn: string | Function,
+  // new Watcher(
+  //   vm,
+  //   getter || noop,
+  //   noop,
+  //   computedWatcherOptions
+  // )
+  constructor(
+    vm: Component,                 //组件实例
+    expOrFn: string | Function,    //表达式或者函数，要观察的对象属性如b.c.d
     cb: Function,
     options?: ?Object,
     isRenderWatcher?: boolean
   ) {
-    this.vm = vm
+    this.vm = vm   //一个watcher对应一个vm，一个vm可以对应多个watcher
     if (isRenderWatcher) {
       vm._watcher = this
     }
-    vm._watchers.push(this)
+    vm._watchers.push(this)   //当前vm所拥有的watcher集合
     // options
     if (options) {
       this.deep = !!options.deep
@@ -70,8 +77,8 @@ export default class Watcher {
     this.dirty = this.lazy // for lazy watchers
     this.deps = []
     this.newDeps = []
-    this.depIds = new Set()
-    this.newDepIds = new Set()
+    this.depIds = new Set()     //不可重复
+    this.newDepIds = new Set()  //不可重复
     this.expression = process.env.NODE_ENV !== 'production'
       ? expOrFn.toString()
       : ''
@@ -90,6 +97,7 @@ export default class Watcher {
         )
       }
     }
+
     this.value = this.lazy
       ? undefined
       : this.get()
@@ -97,13 +105,14 @@ export default class Watcher {
 
   /**
    * Evaluate the getter, and re-collect dependencies.
+   * 获取要监听属性的值
    */
-  get () {
-    pushTarget(this)
+  get() {
+    pushTarget(this)     //当前watcher作为全局watcher
     let value
     const vm = this.vm
     try {
-      value = this.getter.call(vm, vm)
+      value = this.getter.call(vm, vm)   //获取表达式的值
     } catch (e) {
       if (this.user) {
         handleError(e, vm, `getter for watcher "${this.expression}"`)
@@ -125,13 +134,13 @@ export default class Watcher {
   /**
    * Add a dependency to this directive.
    */
-  addDep (dep: Dep) {
+  addDep(dep: Dep) {
     const id = dep.id
     if (!this.newDepIds.has(id)) {
       this.newDepIds.add(id)
       this.newDeps.push(dep)
       if (!this.depIds.has(id)) {
-        dep.addSub(this)
+        dep.addSub(this)   //给当前dep添加watcher
       }
     }
   }
@@ -139,7 +148,7 @@ export default class Watcher {
   /**
    * Clean up for dependency collection.
    */
-  cleanupDeps () {
+  cleanupDeps() {
     let i = this.deps.length
     while (i--) {
       const dep = this.deps[i]
@@ -161,7 +170,7 @@ export default class Watcher {
    * Subscriber interface.
    * Will be called when a dependency changes.
    */
-  update () {
+  update() {
     /* istanbul ignore else */
     if (this.lazy) {
       this.dirty = true
@@ -176,7 +185,7 @@ export default class Watcher {
    * Scheduler job interface.
    * Will be called by the scheduler.
    */
-  run () {
+  run() {
     if (this.active) {
       const value = this.get()
       if (
@@ -207,7 +216,7 @@ export default class Watcher {
    * Evaluate the value of the watcher.
    * This only gets called for lazy watchers.
    */
-  evaluate () {
+  evaluate() {
     this.value = this.get()
     this.dirty = false
   }
@@ -215,7 +224,7 @@ export default class Watcher {
   /**
    * Depend on all deps collected by this watcher.
    */
-  depend () {
+  depend() {
     let i = this.deps.length
     while (i--) {
       this.deps[i].depend()
@@ -225,7 +234,7 @@ export default class Watcher {
   /**
    * Remove self from all dependencies' subscriber list.
    */
-  teardown () {
+  teardown() {
     if (this.active) {
       // remove self from vm's watcher list
       // this is a somewhat expensive operation so we skip it

@@ -1,17 +1,21 @@
 /* @flow */
 
 import { isDef, isObject } from 'shared/util'
-
-export function genClassForVnode (vnode: VNodeWithData): string {
+/**
+ * web平台元素class属性的merge方式
+ */
+export function genClassForVnode(vnode: VNodeWithData): string {
   let data = vnode.data
   let parentNode = vnode
   let childNode = vnode
+  //如果当前vnode是组件而不是web平台的元素，则将组件上的class合并到该组件的root元素的class上
   while (isDef(childNode.componentInstance)) {
-    childNode = childNode.componentInstance._vnode
+    childNode = childNode.componentInstance._vnode   //链接孩子vnode的方式？？
     if (childNode && childNode.data) {
       data = mergeClassData(childNode.data, data)
     }
   }
+  //合并父组件class到当前vnode上
   while (isDef(parentNode = parentNode.parent)) {
     if (parentNode && parentNode.data) {
       data = mergeClassData(data, parentNode.data)
@@ -20,7 +24,7 @@ export function genClassForVnode (vnode: VNodeWithData): string {
   return renderClass(data.staticClass, data.class)
 }
 
-function mergeClassData (child: VNodeData, parent: VNodeData): {
+function mergeClassData(child: VNodeData, parent: VNodeData): {
   staticClass: string,
   class: any
 } {
@@ -32,7 +36,7 @@ function mergeClassData (child: VNodeData, parent: VNodeData): {
   }
 }
 
-export function renderClass (
+export function renderClass(
   staticClass: ?string,
   dynamicClass: any
 ): string {
@@ -43,11 +47,11 @@ export function renderClass (
   return ''
 }
 
-export function concat (a: ?string, b: ?string): string {
+export function concat(a: ?string, b: ?string): string {
   return a ? b ? (a + ' ' + b) : a : (b || '')
 }
 
-export function stringifyClass (value: any): string {
+export function stringifyClass(value: any): string {
   if (Array.isArray(value)) {
     return stringifyArray(value)
   }
@@ -61,7 +65,7 @@ export function stringifyClass (value: any): string {
   return ''
 }
 
-function stringifyArray (value: Array<any>): string {
+function stringifyArray(value: Array<any>): string {
   let res = ''
   let stringified
   for (let i = 0, l = value.length; i < l; i++) {
@@ -73,7 +77,7 @@ function stringifyArray (value: Array<any>): string {
   return res
 }
 
-function stringifyObject (value: Object): string {
+function stringifyObject(value: Object): string {
   let res = ''
   for (const key in value) {
     if (value[key]) {

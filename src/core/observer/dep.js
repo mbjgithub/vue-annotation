@@ -9,32 +9,34 @@ let uid = 0
 /**
  * A dep is an observable that can have multiple
  * directives subscribing to it.
+ * 用于管理watcher，是watcher的集合，可以添加，删除，通知watcher更新
  */
 export default class Dep {
   static target: ?Watcher;
   id: number;
+  // Dep的subs里面放了一堆Watcher
   subs: Array<Watcher>;
 
-  constructor () {
+  constructor() {
     this.id = uid++
     this.subs = []
   }
 
-  addSub (sub: Watcher) {
+  addSub(sub: Watcher) {
     this.subs.push(sub)
   }
 
-  removeSub (sub: Watcher) {
+  removeSub(sub: Watcher) {
     remove(this.subs, sub)
   }
-
-  depend () {
+  // 给Dep的静态属性target加当前dep
+  depend() {
     if (Dep.target) {
       Dep.target.addDep(this)
     }
   }
-
-  notify () {
+  // 通知当前dep包含的所有watcher更新
+  notify() {
     // stabilize the subscriber list first
     const subs = this.subs.slice()
     if (process.env.NODE_ENV !== 'production' && !config.async) {
@@ -55,11 +57,11 @@ export default class Dep {
 Dep.target = null
 const targetStack = []
 
-export function pushTarget (_target: ?Watcher) {
+export function pushTarget(_target: ?Watcher) {
   if (Dep.target) targetStack.push(Dep.target)
   Dep.target = _target
 }
 
-export function popTarget () {
+export function popTarget() {
   Dep.target = targetStack.pop()
 }

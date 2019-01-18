@@ -140,3 +140,42 @@ directives:
 
 
 证明下，如果在子孙组件改变祖先组件的state，会不会导致祖先组件的重新渲染，答案是肯定的，我这里之所以这么慢是因为bridge？
+        编译        元素操作
+模板语法======>vnode==========>真正UI元素
+
+web平台props和attrs的区别：像innerHTML，textContent，innerText属于props，设置在元素上，如src，class，href，id，data-等属于attrs，attrs是用来描述标签特性的，只要是挂在在dom元素上都是props
+
+备注：暂时不明白的地方用TODO标记，便于日后观看
+
+VM原来一直指的是vnode.context
+
+vnode：
+  data:
+    attrs,
+    class,staticClass,
+    style,staticStyle,
+    domProps,
+    on(数据结构：{click:fn1,hover:[fn2,fn3]}),
+    transition,
+    ref(当前组件所处上下文，也就是处于哪个自定义组件的模板中)(通用模块),
+    directives(通用模块),
+  elm:
+  
+  componentInstance(组件实例):
+    _vnode(组件根元素节点??)
+
+  parent(父节点):
+
+  children(子节点):
+
+  context(就是我们在组件内常用的this??):
+    $refs
+
+
+1、所以vue core到底干了啥，提供了啥接口，功能
+2、接入vue core的平台有什么便利之处，如web，weex，hippy
+3、平台如何接入vue core，如web，weex，hippy
+
+Watcher,Observer,Dep三者的关系
+        通知    通知
+Observer====>Dep====>Watcher

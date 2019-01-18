@@ -1,10 +1,16 @@
 /* @flow */
-
+/**
+ * 给web平台元素更新样式
+ */
 import { getStyle, normalizeStyleBinding } from 'web/util/style'
 import { cached, camelize, extend, isDef, isUndef } from 'shared/util'
 
 const cssVarRE = /^--/
 const importantRE = /\s*!important$/
+
+/**
+ * 设置元素样式
+ */
 const setProp = (el, name, val) => {
   /* istanbul ignore if */
   if (cssVarRE.test(name)) {
@@ -29,6 +35,7 @@ const setProp = (el, name, val) => {
 const vendorNames = ['Webkit', 'Moz', 'ms']
 
 let emptyStyle
+//样式名称标准化
 const normalize = cached(function (prop) {
   emptyStyle = emptyStyle || document.createElement('div').style
   prop = camelize(prop)
@@ -44,7 +51,7 @@ const normalize = cached(function (prop) {
   }
 })
 
-function updateStyle (oldVnode: VNodeWithData, vnode: VNodeWithData) {
+function updateStyle(oldVnode: VNodeWithData, vnode: VNodeWithData) {
   const data = vnode.data
   const oldData = oldVnode.data
 
@@ -61,7 +68,7 @@ function updateStyle (oldVnode: VNodeWithData, vnode: VNodeWithData) {
 
   // if static style exists, stylebinding already merged into it when doing normalizeStyleData
   const oldStyle = oldStaticStyle || oldStyleBinding
-
+  //传入的样式数据格式标准化
   const style = normalizeStyleBinding(vnode.data.style) || {}
 
   // store normalized style under a different key for next diff

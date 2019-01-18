@@ -1,5 +1,7 @@
 /* @flow */
-
+/**
+ * TODO
+ */
 import { inBrowser, isIE9, warn } from 'core/util/index'
 import { mergeVNodeHook } from 'core/vdom/helpers/index'
 import { activeInstance } from 'core/instance/lifecycle'
@@ -20,7 +22,7 @@ import {
   removeTransitionClass
 } from '../transition-util'
 
-export function enter (vnode: VNodeWithData, toggleDisplay: ?() => void) {
+export function enter(vnode: VNodeWithData, toggleDisplay: ?() => void) {
   const el: any = vnode.elm
 
   // call leave callback now
@@ -173,7 +175,7 @@ export function enter (vnode: VNodeWithData, toggleDisplay: ?() => void) {
   }
 }
 
-export function leave (vnode: VNodeWithData, rm: Function) {
+export function leave(vnode: VNodeWithData, rm: Function) {
   const el: any = vnode.elm
 
   // call enter callback now
@@ -245,7 +247,7 @@ export function leave (vnode: VNodeWithData, rm: Function) {
     performLeave()
   }
 
-  function performLeave () {
+  function performLeave() {
     // the delayed leave may have already been cancelled
     if (cb.cancelled) {
       return
@@ -280,7 +282,7 @@ export function leave (vnode: VNodeWithData, rm: Function) {
 }
 
 // only used in dev mode
-function checkDuration (val, name, vnode) {
+function checkDuration(val, name, vnode) {
   if (typeof val !== 'number') {
     warn(
       `<transition> explicit ${name} duration is not a valid number - ` +
@@ -296,7 +298,7 @@ function checkDuration (val, name, vnode) {
   }
 }
 
-function isValidDuration (val) {
+function isValidDuration(val) {
   return typeof val === 'number' && !isNaN(val)
 }
 
@@ -306,7 +308,7 @@ function isValidDuration (val) {
  * - a wrapped component method (check ._length)
  * - a plain function (.length)
  */
-function getHookArgumentsLength (fn: Function): boolean {
+function getHookArgumentsLength(fn: Function): boolean {
   if (isUndef(fn)) {
     return false
   }
@@ -323,7 +325,7 @@ function getHookArgumentsLength (fn: Function): boolean {
   }
 }
 
-function _enter (_: any, vnode: VNodeWithData) {
+function _enter(_: any, vnode: VNodeWithData) {
   if (vnode.data.show !== true) {
     enter(vnode)
   }
@@ -332,7 +334,7 @@ function _enter (_: any, vnode: VNodeWithData) {
 export default inBrowser ? {
   create: _enter,
   activate: _enter,
-  remove (vnode: VNode, rm: Function) {
+  remove(vnode: VNode, rm: Function) {
     /* istanbul ignore else */
     if (vnode.data.show !== true) {
       leave(vnode, rm)

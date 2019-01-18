@@ -1,5 +1,7 @@
 /* @flow */
-
+/**
+ * 暴露给用户，接入平台，和vue core自己用的配置
+ */
 import {
   no,
   noop,
@@ -9,7 +11,7 @@ import {
 import { LIFECYCLE_HOOKS } from 'shared/constants'
 
 export type Config = {
-  // user
+  // user,给开发者用的配置
   optionMergeStrategies: { [key: string]: Function };
   silent: boolean;
   productionTip: boolean;
@@ -20,7 +22,7 @@ export type Config = {
   ignoredElements: Array<string | RegExp>;
   keyCodes: { [key: string]: number | Array<number> };
 
-  // platform
+  // platform，供接入vue core的平台使用
   isReservedTag: (x?: string) => boolean;
   isReservedAttr: (x?: string) => boolean;
   parsePlatformTagName: (x: string) => string;
@@ -31,7 +33,7 @@ export type Config = {
   // private
   async: boolean;
 
-  // legacy
+  // legacy,遗留的
   _lifecycleHooks: Array<string>;
 };
 

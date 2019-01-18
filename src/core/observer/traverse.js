@@ -11,17 +11,20 @@ const seenObjects = new Set()
  * getters, so that every nested property inside the object
  * is collected as a "deep" dependency.
  */
-export function traverse (val: any) {
+export function traverse(val: any) {
   _traverse(val, seenObjects)
   seenObjects.clear()
 }
 
-function _traverse (val: any, seen: SimpleSet) {
+function _traverse(val: any, seen: SimpleSet) {
   let i, keys
   const isA = Array.isArray(val)
   if ((!isA && !isObject(val)) || Object.isFrozen(val) || val instanceof VNode) {
     return
   }
+  /**
+   * 这里递归访问对象的__ob__属性是啥子意思咯,TODO
+   */
   if (val.__ob__) {
     const depId = val.__ob__.dep.id
     if (seen.has(depId)) {

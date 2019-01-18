@@ -1,10 +1,13 @@
 /* @flow */
-
+/**
+ * 创造出一个继承自Vue的新类，官方：使用基础 Vue 构造器，创建一个“子类”
+ * Vue.component里面调用的也是Vue.extend
+ */
 import { ASSET_TYPES } from 'shared/constants'
 import { defineComputed, proxy } from '../instance/state'
 import { extend, mergeOptions, validateComponentName } from '../util/index'
 
-export function initExtend (Vue: GlobalAPI) {
+export function initExtend(Vue: GlobalAPI) {
   /**
    * Each instance constructor, including Vue, has a unique
    * cid. This enables us to create wrapped "child
@@ -14,13 +17,14 @@ export function initExtend (Vue: GlobalAPI) {
   let cid = 1
 
   /**
-   * Class inheritance
+   * Class inheritance,所以说如果用Vue.extend会创造出一个继承自Vue的新类
    */
   Vue.extend = function (extendOptions: Object): Function {
     extendOptions = extendOptions || {}
     const Super = this
     const SuperId = Super.cid
     const cachedCtors = extendOptions._Ctor || (extendOptions._Ctor = {})
+    // 如果构造函数有被缓存过
     if (cachedCtors[SuperId]) {
       return cachedCtors[SuperId]
     }
@@ -30,12 +34,13 @@ export function initExtend (Vue: GlobalAPI) {
       validateComponentName(name)
     }
 
-    const Sub = function VueComponent (options) {
+    const Sub = function VueComponent(options) {
       this._init(options)
     }
     Sub.prototype = Object.create(Super.prototype)
     Sub.prototype.constructor = Sub
     Sub.cid = cid++
+    //当前options与全局options合并
     Sub.options = mergeOptions(
       Super.options,
       extendOptions
@@ -45,9 +50,11 @@ export function initExtend (Vue: GlobalAPI) {
     // For props and computed properties, we define the proxy getters on
     // the Vue instances at extension time, on the extended prototype. This
     // avoids Object.defineProperty calls for each instance created.
+    //TODO
     if (Sub.options.props) {
       initProps(Sub)
     }
+    //TODO
     if (Sub.options.computed) {
       initComputed(Sub)
     }
@@ -72,6 +79,7 @@ export function initExtend (Vue: GlobalAPI) {
     // been updated.
     Sub.superOptions = Super.options
     Sub.extendOptions = extendOptions
+    //浅复制
     Sub.sealedOptions = extend({}, Sub.options)
 
     // cache constructor
@@ -80,14 +88,14 @@ export function initExtend (Vue: GlobalAPI) {
   }
 }
 
-function initProps (Comp) {
+function initProps(Comp) {
   const props = Comp.options.props
   for (const key in props) {
     proxy(Comp.prototype, `_props`, key)
   }
 }
 
-function initComputed (Comp) {
+function initComputed(Comp) {
   const computed = Comp.options.computed
   for (const key in computed) {
     defineComputed(Comp.prototype, key, computed[key])

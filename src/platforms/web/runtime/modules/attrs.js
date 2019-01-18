@@ -1,13 +1,19 @@
 /* @flow */
-
+/**
+ * 给vnode提供web平台元素的创建和更新方法
+ */
 import { isIE, isIE9, isEdge } from 'core/util/env'
-
+/**
+ * 全局utils
+ */
 import {
   extend,
   isDef,
   isUndef
 } from 'shared/util'
-
+/**
+ * web专用utils
+ */
 import {
   isXlink,
   xlinkNS,
@@ -17,7 +23,7 @@ import {
   isFalsyAttrValue
 } from 'web/util/index'
 
-function updateAttrs (oldVnode: VNodeWithData, vnode: VNodeWithData) {
+function updateAttrs(oldVnode: VNodeWithData, vnode: VNodeWithData) {
   const opts = vnode.componentOptions
   if (isDef(opts) && opts.Ctor.options.inheritAttrs === false) {
     return
@@ -58,7 +64,7 @@ function updateAttrs (oldVnode: VNodeWithData, vnode: VNodeWithData) {
   }
 }
 
-function setAttr (el: Element, key: string, value: any) {
+function setAttr(el: Element, key: string, value: any) {
   if (el.tagName.indexOf('-') > -1) {
     baseSetAttr(el, key, value)
   } else if (isBooleanAttr(key)) {
@@ -87,7 +93,7 @@ function setAttr (el: Element, key: string, value: any) {
   }
 }
 
-function baseSetAttr (el, key, value) {
+function baseSetAttr(el, key, value) {
   if (isFalsyAttrValue(value)) {
     el.removeAttribute(key)
   } else {

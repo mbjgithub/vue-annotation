@@ -35,17 +35,17 @@ const sharedPropertyDefinition = {
   set: noop
 }
 
-export function proxy (target: Object, sourceKey: string, key: string) {
-  sharedPropertyDefinition.get = function proxyGetter () {
+export function proxy(target: Object, sourceKey: string, key: string) {
+  sharedPropertyDefinition.get = function proxyGetter() {
     return this[sourceKey][key]
   }
-  sharedPropertyDefinition.set = function proxySetter (val) {
+  sharedPropertyDefinition.set = function proxySetter(val) {
     this[sourceKey][key] = val
   }
   Object.defineProperty(target, key, sharedPropertyDefinition)
 }
 
-export function initState (vm: Component) {
+export function initState(vm: Component) {
   vm._watchers = []
   const opts = vm.$options
   if (opts.props) initProps(vm, opts.props)
@@ -60,8 +60,10 @@ export function initState (vm: Component) {
     initWatch(vm, opts.watch)
   }
 }
-
-function initProps (vm: Component, propsOptions: Object) {
+/**
+ * 将传入的props定义为响应式属性，并且代理到实例上
+ */
+function initProps(vm: Component, propsOptions: Object) {
   const propsData = vm.$options.propsData || {}
   const props = vm._props = {}
   // cache prop keys so that future props updates can iterate using Array
@@ -79,7 +81,7 @@ function initProps (vm: Component, propsOptions: Object) {
     if (process.env.NODE_ENV !== 'production') {
       const hyphenatedKey = hyphenate(key)
       if (isReservedAttribute(hyphenatedKey) ||
-          config.isReservedAttr(hyphenatedKey)) {
+        config.isReservedAttr(hyphenatedKey)) {
         warn(
           `"${hyphenatedKey}" is a reserved attribute and cannot be used as component prop.`,
           vm
@@ -102,15 +104,19 @@ function initProps (vm: Component, propsOptions: Object) {
     // static props are already proxied on the component's prototype
     // during Vue.extend(). We only need to proxy props defined at
     // instantiation here.
+    //不在实例上的props的key，都代理到实例上，这样就可以直接通过实例访问
     if (!(key in vm)) {
-      proxy(vm, `_props`, key)    
+      proxy(vm, `_props`, key)
     }
   }
   toggleObserving(true)
 }
-
-function initData (vm: Component) {
+/**
+ * data的属性代理到实例上，并且将data响应式化
+ */
+function initData(vm: Component) {
   let data = vm.$options.data
+  //获取data state
   data = vm._data = typeof data === 'function'
     ? getData(data, vm)
     : data || {}
@@ -127,6 +133,7 @@ function initData (vm: Component) {
   const props = vm.$options.props
   const methods = vm.$options.methods
   let i = keys.length
+  // while性能比for好
   while (i--) {
     const key = keys[i]
     if (process.env.NODE_ENV !== 'production') {
@@ -151,7 +158,7 @@ function initData (vm: Component) {
   observe(data, true /* asRootData */)        //响应式
 }
 
-export function getData (data: Function, vm: Component): any {
+export function getData(data: Function, vm: Component): any {
   // #7573 disable dep collection when invoking data getters
   pushTarget()
   try {
@@ -165,8 +172,10 @@ export function getData (data: Function, vm: Component): any {
 }
 
 const computedWatcherOptions = { lazy: true }
-
-function initComputed (vm: Component, computed: Object) {
+/**
+ * 给所有的计算属性添加watcher，并挂载到实例上
+ */
+function initComputed(vm: Component, computed: Object) {
   // $flow-disable-line
   const watchers = vm._computedWatchers = Object.create(null)
   // computed properties are just getters during SSR
@@ -206,8 +215,10 @@ function initComputed (vm: Component, computed: Object) {
     }
   }
 }
-
-export function defineComputed (
+/**
+ * 在实例上挂在计算属性
+ */
+export function defineComputed(
   target: any,
   key: string,
   userDef: Object | Function
@@ -229,7 +240,7 @@ export function defineComputed (
       : noop
   }
   if (process.env.NODE_ENV !== 'production' &&
-      sharedPropertyDefinition.set === noop) {
+    sharedPropertyDefinition.set === noop) {
     sharedPropertyDefinition.set = function () {
       warn(
         `Computed property "${key}" was assigned to but it has no setter.`,
@@ -240,8 +251,8 @@ export function defineComputed (
   Object.defineProperty(target, key, sharedPropertyDefinition)
 }
 
-function createComputedGetter (key) {
-  return function computedGetter () {
+function createComputedGetter(key) {
+  return function computedGetter() {
     const watcher = this._computedWatchers && this._computedWatchers[key]
     if (watcher) {
       if (watcher.dirty) {
@@ -254,8 +265,10 @@ function createComputedGetter (key) {
     }
   }
 }
-
-function initMethods (vm: Component, methods: Object) {
+/**
+ * 给methods绑定当前vm上下文，并代理到vm上
+ */
+function initMethods(vm: Component, methods: Object) {
   const props = vm.$options.props
   for (const key in methods) {
     if (process.env.NODE_ENV !== 'production') {
@@ -283,7 +296,7 @@ function initMethods (vm: Component, methods: Object) {
   }
 }
 
-function initWatch (vm: Component, watch: Object) {
+function initWatch(vm: Component, watch: Object) {
   for (const key in watch) {
     const handler = watch[key]
     if (Array.isArray(handler)) {
@@ -296,7 +309,7 @@ function initWatch (vm: Component, watch: Object) {
   }
 }
 
-function createWatcher (
+function createWatcher(
   vm: Component,
   expOrFn: string | Function,
   handler: any,
@@ -312,7 +325,7 @@ function createWatcher (
   return vm.$watch(expOrFn, handler, options)
 }
 
-export function stateMixin (Vue: Class<Component>) {
+export function stateMixin(Vue: Class<Component>) {
   // flow somehow has problems with directly declared definition object
   // when using Object.defineProperty, so we have to procedurally build up
   // the object here.
@@ -353,7 +366,7 @@ export function stateMixin (Vue: Class<Component>) {
     if (options.immediate) {
       cb.call(vm, watcher.value)
     }
-    return function unwatchFn () {
+    return function unwatchFn() {
       watcher.teardown()
     }
   }

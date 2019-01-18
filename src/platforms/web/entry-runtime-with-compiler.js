@@ -1,5 +1,4 @@
 /* @flow */
-
 import config from 'core/config'
 import { warn, cached } from 'core/util/index'
 import { mark, measure } from 'core/util/perf'
@@ -13,7 +12,6 @@ const idToTemplate = cached(id => {
   const el = query(id)
   return el && el.innerHTML
 })
-
 const mount = Vue.prototype.$mount
 
 //这个$mount是给上面的mount在包了一层，防止没有render函数的情况
@@ -72,8 +70,8 @@ Vue.prototype.$mount = function (
       }, this)
       options.render = render
       options.staticRenderFns = staticRenderFns
-      console.log("render function:",render)
-      console.log("staticRenderFns function:",staticRenderFns)
+      console.log("render function:", render)
+      console.log("staticRenderFns function:", staticRenderFns)
       /* istanbul ignore if */
       if (process.env.NODE_ENV !== 'production' && config.performance && mark) {
         mark('compile end')
@@ -88,7 +86,7 @@ Vue.prototype.$mount = function (
  * Get outerHTML of elements, taking care
  * of SVG elements in IE as well.
  */
-function getOuterHTML (el: Element): string {
+function getOuterHTML(el: Element): string {
   if (el.outerHTML) {
     return el.outerHTML
   } else {
@@ -101,3 +99,9 @@ function getOuterHTML (el: Element): string {
 Vue.compile = compileToFunctions
 
 export default Vue
+
+
+// new Vue({
+//   el:'#app',
+//   render:h=>h(App)
+// })

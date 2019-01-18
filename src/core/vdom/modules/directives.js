@@ -1,5 +1,7 @@
 /* @flow */
-
+/**
+ * 为所有平台定义指令操作，负责在vnode各个生命周期调用定义指令时提供的钩子函数
+ */
 import { emptyNode } from 'core/vdom/patch'
 import { resolveAsset, handleError } from 'core/util/index'
 import { mergeVNodeHook } from 'core/vdom/helpers/index'
@@ -7,20 +9,21 @@ import { mergeVNodeHook } from 'core/vdom/helpers/index'
 export default {
   create: updateDirectives,
   update: updateDirectives,
-  destroy: function unbindDirectives (vnode: VNodeWithData) {
+  destroy: function unbindDirectives(vnode: VNodeWithData) {
     updateDirectives(vnode, emptyNode)
   }
 }
 
-function updateDirectives (oldVnode: VNodeWithData, vnode: VNodeWithData) {
+function updateDirectives(oldVnode: VNodeWithData, vnode: VNodeWithData) {
   if (oldVnode.data.directives || vnode.data.directives) {
     _update(oldVnode, vnode)
   }
 }
 
-function _update (oldVnode, vnode) {
-  const isCreate = oldVnode === emptyNode
-  const isDestroy = vnode === emptyNode
+function _update(oldVnode, vnode) {
+  const isCreate = oldVnode === emptyNode   //vnode创建时
+  const isDestroy = vnode === emptyNode     //vnode销毁时
+
   const oldDirs = normalizeDirectives(oldVnode.data.directives, oldVnode.context)
   const newDirs = normalizeDirectives(vnode.data.directives, vnode.context)
 
@@ -79,8 +82,8 @@ function _update (oldVnode, vnode) {
 }
 
 const emptyModifiers = Object.create(null)
-
-function normalizeDirectives (
+//标准化指令
+function normalizeDirectives(
   dirs: ?Array<VNodeDirective>,
   vm: Component
 ): { [key: string]: VNodeDirective } {
@@ -97,17 +100,17 @@ function normalizeDirectives (
       dir.modifiers = emptyModifiers
     }
     res[getRawDirName(dir)] = dir
-    dir.def = resolveAsset(vm.$options, 'directives', dir.name, true)
+    dir.def = resolveAsset(vm.$options, 'directives', dir.name, true)  //获取指定名称的指令定义,TODO,不知道为什么要去拿context里面的指令定义
   }
   // $flow-disable-line
   return res
 }
 
-function getRawDirName (dir: VNodeDirective): string {
+function getRawDirName(dir: VNodeDirective): string {
   return dir.rawName || `${dir.name}.${Object.keys(dir.modifiers || {}).join('.')}`
 }
 
-function callHook (dir, hook, vnode, oldVnode, isDestroy) {
+function callHook(dir, hook, vnode, oldVnode, isDestroy) {
   const fn = dir.def && dir.def[hook]
   if (fn) {
     try {

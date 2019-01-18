@@ -1,5 +1,7 @@
 /* @flow */
-
+/**
+ * Vue的vnode定义
+ */
 export default class VNode {
   tag: string | void;           //
   data: VNodeData | void;
@@ -7,11 +9,11 @@ export default class VNode {
   text: string | void;
   elm: Node | void;
   ns: string | void;
-  context: Component | void; // rendered in this component's scope
+  context: Component | void; // rendered in this component's scope,指向该组件所在组件实例
   key: string | number | void;
   componentOptions: VNodeComponentOptions | void;
-  componentInstance: Component | void; // component instance
-  parent: VNode | void; // component placeholder node
+  componentInstance: Component | void; // component instance,组件实例
+  parent: VNode | void; // component placeholder node,自定义组件的占位组件
 
   // strictly internal
   raw: boolean; // contains raw HTML? (server only)
@@ -28,7 +30,7 @@ export default class VNode {
   fnOptions: ?ComponentOptions; // for SSR caching
   fnScopeId: ?string; // functional scope id support
 
-  constructor (
+  constructor(
     tag?: string,
     data?: VNodeData,
     children?: ?Array<VNode>,
@@ -65,7 +67,7 @@ export default class VNode {
 
   // DEPRECATED: alias for componentInstance for backwards compat.
   /* istanbul ignore next */
-  get child (): Component | void {
+  get child(): Component | void {
     return this.componentInstance
   }
 }
@@ -77,7 +79,7 @@ export const createEmptyVNode = (text: string = '') => {
   return node
 }
 
-export function createTextVNode (val: string | number) {
+export function createTextVNode(val: string | number) {
   return new VNode(undefined, undefined, undefined, String(val))
 }
 
@@ -85,7 +87,7 @@ export function createTextVNode (val: string | number) {
 // used for static nodes and slot nodes because they may be reused across
 // multiple renders, cloning them avoids errors when DOM manipulations rely
 // on their elm reference.
-export function cloneVNode (vnode: VNode): VNode {
+export function cloneVNode(vnode: VNode): VNode {
   const cloned = new VNode(
     vnode.tag,
     vnode.data,
