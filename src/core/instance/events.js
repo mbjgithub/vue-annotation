@@ -9,13 +9,13 @@ import {
 } from '../util/index'
 import { updateListeners } from '../vdom/helpers/index'
 
-export function initEvents (vm: Component) {
+export function initEvents(vm: Component) {
   vm._events = Object.create(null)
   vm._hasHookEvent = false
   // init parent attached events
-  
+
   const listeners = vm.$options._parentListeners
-  console.log("initEvents",listeners)
+  console.log("initEvents", listeners)
   if (listeners) {
     updateComponentListeners(vm, listeners)
   }
@@ -23,7 +23,7 @@ export function initEvents (vm: Component) {
 
 let target: any
 
-function add (event, fn, once) {
+function add(event, fn, once) {
   if (once) {
     target.$once(event, fn)
   } else {
@@ -31,11 +31,11 @@ function add (event, fn, once) {
   }
 }
 
-function remove (event, fn) {
+function remove(event, fn) {
   target.$off(event, fn)
 }
 
-export function updateComponentListeners (
+export function updateComponentListeners(
   vm: Component,
   listeners: Object,
   oldListeners: ?Object
@@ -45,7 +45,7 @@ export function updateComponentListeners (
   target = undefined
 }
 
-export function eventsMixin (Vue: Class<Component>) {
+export function eventsMixin(Vue: Class<Component>) {
   const hookRE = /^hook:/
   Vue.prototype.$on = function (event: string | Array<string>, fn: Function): Component {
     const vm: Component = this
@@ -54,7 +54,7 @@ export function eventsMixin (Vue: Class<Component>) {
         vm.$on(event[i], fn)
       }
     } else {
-      (vm._events[event] || (vm._events[event] = [])).push(fn)
+      (vm._events[event] || (vm._events[event] = [])).push(fn)  //发到vm的事件列表中
       // optimize hook:event cost by using a boolean flag marked at registration
       // instead of a hash lookup
       if (hookRE.test(event)) {
@@ -66,7 +66,7 @@ export function eventsMixin (Vue: Class<Component>) {
 
   Vue.prototype.$once = function (event: string, fn: Function): Component {
     const vm: Component = this
-    function on () {
+    function on() {
       vm.$off(event, on)
       fn.apply(vm, arguments)
     }

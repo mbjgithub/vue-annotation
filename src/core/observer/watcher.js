@@ -49,6 +49,15 @@ export default class Watcher {
   //   noop,
   //   computedWatcherOptions
   // )
+  // updateComponent里面
+  // new Watcher(vm, updateComponent, noop, {
+  //   before() {
+  //     if (vm._isMounted) {
+  //       callHook(vm, 'beforeUpdate')
+  //     }
+  //   }
+  // }, true)
+  // 这里
   constructor(
     vm: Component,                 //组件实例
     expOrFn: string | Function,    //表达式或者函数，要观察的对象属性如b.c.d
@@ -84,7 +93,7 @@ export default class Watcher {
       : ''
     // parse expression for getter
     if (typeof expOrFn === 'function') {
-      this.getter = expOrFn
+      this.getter = expOrFn   //updateComponent
     } else {
       this.getter = parsePath(expOrFn)
       if (!this.getter) {

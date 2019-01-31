@@ -113,6 +113,7 @@ function initProps(vm: Component, propsOptions: Object) {
 }
 /**
  * data的属性代理到实例上，并且将data响应式化
+ * vm._data,vm.$data,
  */
 function initData(vm: Component) {
   let data = vm.$options.data

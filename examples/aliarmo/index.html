@@ -1,33 +1,35 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <title>Vue.js wrapper component example (jquery plugin: select2)</title>
-    <!-- Delete ".min" for console warnings in development -->
-    <script src="../../dist/vue.js"></script>
-    <script src="https://unpkg.com/jquery"></script>
-    <script src="https://unpkg.com/select2@4.0.3"></script>
-    <link href="https://unpkg.com/select2@4.0.3/dist/css/select2.min.css" rel="stylesheet">
-    <style>
-      html, body {
+
+<head>
+  <meta charset="utf-8">
+  <title>Vue.js wrapper component example (jquery plugin: select2)</title>
+  <!-- Delete ".min" for console warnings in development -->
+  <script src="../../dist/vue.js"></script>
+  <script src="https://unpkg.com/jquery"></script>
+  <script src="https://unpkg.com/select2@4.0.3"></script>
+  <link href="https://unpkg.com/select2@4.0.3/dist/css/select2.min.css" rel="stylesheet">
+  <style>
+    html, body {
         font: 13px/18px sans-serif;
       }
       select {
         min-width: 300px;
       }
     </style>
-  </head>
-  <body>
+</head>
 
-    <div id="el">
-    </div>
+<body>
 
-    <!-- using string template here to work around HTML <option> placement restriction -->
-    <!-- (function anonymous(
+  <div id="el">
+  </div>
+
+  <!-- using string template here to work around HTML <option> placement restriction -->
+  <!-- (function anonymous(
     ) {
     with(this){return _c('div',{staticClass:"container"},[_c('p',[_v("Selected: "+_s(selected))]),_v(" "),_c('select2',{attrs:{"options":options},model:{value:(selected),callback:function ($$v) {selected=$$v},expression:"selected"}},[_c('option',{attrs:{"disabled":"","value":"0"}},[_v("Select one")])]),_v(" "),_c('MyComp',{attrs:{"myData":myData,"title":"啦啦啦啦啦"}})],1)}
     }) -->
-    <script type="text/x-template" id="demo-template">
+  <script type="text/x-template" id="demo-template">
       <div class="container">
         <p>Selected: {{ selected }}</p>
         <select2 :options="options" v-model="selected">
@@ -38,14 +40,14 @@
       </div>
     </script>
 
-    <script type="text/x-template" id="select2-template">
+  <script type="text/x-template" id="select2-template">
       <div>
         <select>
           <slot></slot>
         </select>
       </div>
     </script>
-    <script type="text/x-template" id="MyComp-template">
+  <script type="text/x-template" id="MyComp-template">
       <div>
        myData.name: <p @click="onClick">{{myData.name}}</p>
        title: <p>{{title}}</p>
@@ -53,27 +55,67 @@
        <SubComp></SubComp>
       </div>
     </script>
-    <script type="text/x-template" id="SubComp-template">
+  <script type="text/x-template" id="SubComp-template">
       <div>
        Sub=>CompfromSelf: <p>{{fromSelf}}</p>
       </div>
     </script>
-    <script type="text/x-template" id="TestComp-Template">
+  <script type="text/x-template" id="TestComp-Template">
       <div class="TestComp">
         <p class="TestComp-P" @click="onClick">{{username}}:{{password}}</p>
       </div>
     </script>
-    <script type="text/x-template" id="Test-Template">
+
+
+  <script type="text/x-template" id="Test-Template">
+    <!--
+      vnode:{
+        tag:'div',
+        children:[{
+          tag:undefined
+        },{
+          tag:undefined
+        },{
+          tag:"vue-component-1-TestComp",
+          componentOptions:{
+            propsData: {password: "123456", username: "aliarmo"},
+            tag: "TestComp"
+          },
+          data:{
+            attrs: {},
+            hook: {init: ƒ, prepatch: ƒ, insert: ƒ, destroy: ƒ},
+            on: undefined
+          }
+        },{
+          tag:undefined
+        },{
+          tag:'button',
+          data:{
+            on: {click: ƒ}
+          },
+          children:[{
+            text: "切换",
+            elm:''
+          }]
+        }],
+        componentInstance:'',
+        data:'',
+        elm:'',
+        isRootInsert:true,
+        context:{/*里面有很多东西*/}
+      }
+     -->
       <div>
         <div class="Test" v-if="isShow">
           {{username}}:{{password}}
         </div>
         <TestComp :username="username"
                   :password="password"></TestComp>
-        <button @click="toggle"></button>
+        <button @click="toggle">切换</button>
       </div>
     </script>
-    <script>
+
+  <script>
     //   Vue.config.performance
     //   Vue.component('SubComp',{
     //     props:[],
@@ -178,16 +220,28 @@
     //   }
     // })
     // console.log("VM",vm)
-    Vue.component('TestComp',{
-      props:['username','password'],
-      template:'#TestComp-Template',
-      data(){
+
+    /** 组件的定义放到Vue.options.components这个对象里面，以key，value形式存在
+    * props要转化成标准的形式
+    * props: {
+    *   username: {
+    *     type: 'string'
+    *   },
+    *   password: {
+    *     type: 'string'
+    *   }
+    * }
+    * */
+    Vue.component('TestComp', {
+      props: ['username', 'password'],   //会被标准化
+      template: '#TestComp-Template',    //获取模板，被编译成render和renderStatic函数
+      data() {
         return {
-          title:'用户信息'
+          title: '用户信息'
         }
       },
-      methods:{
-        onClick(){
+      methods: {
+        onClick() {
           this.$emit('click')
         }
       }
@@ -198,30 +252,34 @@
     // 4、$mount，然后new Watcher，并执行updateComponent，执行render生成vnode
     // 5、执行patch，patch会创建当前vnode对应的dom，如果这个vnode有孩子的话，遍历这些孩子vnode
     //    如果是组件vnode的话，则重复上述new Vue过程，非组件vnode，创建dom，append到父元素里面
-    
+
+    /**
+     * __patch__(#el,vnode)
+     * */
     new Vue({
-      el:'#el',
-      template:'#Test-Template',
-      data:{
-        username:"aliarmo",
-        password:'123456',
-        isShow:false
+      el: '#el',
+      template: '#Test-Template',
+      data: {
+        username: "aliarmo",
+        password: '123456',
+        isShow: false
       },
-      created(){
-        setTimeout(()=>{
-          this.username='shaniawei'
-          this.password="11111"
-        },0)
+      created() {
+        setTimeout(() => {
+          this.username = 'shaniawei'
+          this.password = "11111"
+        }, 0)
       },
-      methods:{
-        onClick(){
+      methods: {
+        onClick() {
           alert('你点我了')
         },
-        toggle(){
-          this.isShow=!this.isShow
+        toggle() {
+          this.isShow = !this.isShow
         }
       }
     })
-    </script>
-  </body>
+  </script>
+</body>
+
 </html>

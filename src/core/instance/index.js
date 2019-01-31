@@ -21,8 +21,8 @@ function Vue(options) {
 
 //Vue的prototype上挂在方法，也就是给实例挂载方法
 initMixin(Vue)        //实例上挂载_init函数，这个函数会在实例化的时候被调用，里面有生命周期函数beforeCreated,created,
-stateMixin(Vue)       //实例上挂载$set,$delete,$watch
-eventsMixin(Vue)      //实例上挂载$on,$off,$once,$emit
+stateMixin(Vue)       //实例上挂载$set,$delete,$watch,    this.$data<==>this._data,this.$props<==>this._props
+eventsMixin(Vue)      //实例上挂载$on,$off,$once,$emit,   this._events
 lifecycleMixin(Vue)   //实例上挂载_update,$forceUpdate,$destory
 renderMixin(Vue)      //实例上挂载$nextTick,_render(原来render的最终结果是VNode)
 

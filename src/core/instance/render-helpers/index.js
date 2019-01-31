@@ -10,12 +10,15 @@ import { bindObjectProps } from './bind-object-props'
 import { renderStatic, markOnce } from './render-static'
 import { bindObjectListeners } from './bind-object-listeners'
 import { resolveScopedSlots } from './resolve-slots'
-
-export function installRenderHelpers (target: any) {
+/**
+ *
+ * @param {Vue.prototype} target
+ */
+export function installRenderHelpers(target: any) {
   target._o = markOnce
-  target._n = toNumber
-  target._s = toString
-  target._l = renderList
+  target._n = toNumber       //转为整数
+  target._s = toString        //转为字符串
+  target._l = renderList      //渲染v-for
   target._t = renderSlot
   target._q = looseEqual
   target._i = looseIndexOf

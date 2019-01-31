@@ -20,7 +20,7 @@ export function initMixin(Vue: Class<Component>) {
   Vue.prototype._init = function (options?: Object) {
     const vm: Component = this
     // a uid
-    vm._uid = uid++
+    vm._uid = uid++    //每个组件实例都有个编号
 
     let startTag, endTag
     /* istanbul ignore if */
@@ -31,6 +31,7 @@ export function initMixin(Vue: Class<Component>) {
     }
 
     // a flag to avoid this being observed
+    //避免组件实例被观察
     vm._isVue = true
     // merge options
     //这里通过mergeOptions生成的$options跟传入的options相比，有了很大变动
@@ -48,6 +49,7 @@ export function initMixin(Vue: Class<Component>) {
     }
     console.log('vm.$options', vm.$options)
     /* istanbul ignore else */
+    //非生产环境下用es6的Proxy代理vm，便于访问vm的非法属性时做出提示
     if (process.env.NODE_ENV !== 'production') {
       initProxy(vm)
     } else {

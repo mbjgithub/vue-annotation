@@ -16,11 +16,12 @@ import { registerComponentHook, updateComponentData } from '../../util/index'
 let uid = 0
 
 // override Vue.prototype._init
-function initVirtualComponent (options: Object = {}) {
+function initVirtualComponent(options: Object = {}) {
   const vm: Component = this
   const componentId = options.componentId
 
   // virtual component uid
+  // 组件实例编号，在initMixin里面
   vm._uid = `virtual-component-${uid++}`
 
   // a flag to avoid this being observed
@@ -83,7 +84,7 @@ function initVirtualComponent (options: Object = {}) {
 }
 
 // override Vue.prototype._update
-function updateVirtualComponent (vnode?: VNode) {
+function updateVirtualComponent(vnode?: VNode) {
   const vm: Component = this
   const componentId = vm.$options.componentId
   if (vm._isMounted) {
@@ -100,7 +101,7 @@ function updateVirtualComponent (vnode?: VNode) {
 }
 
 // listening on native callback
-export function resolveVirtualComponent (vnode: MountedComponentVNode): VNode {
+export function resolveVirtualComponent(vnode: MountedComponentVNode): VNode {
   const BaseCtor = vnode.componentOptions.Ctor
   const VirtualComponent = BaseCtor.extend({})
   const cid = VirtualComponent.cid
@@ -108,7 +109,7 @@ export function resolveVirtualComponent (vnode: MountedComponentVNode): VNode {
   VirtualComponent.prototype._update = updateVirtualComponent
 
   vnode.componentOptions.Ctor = BaseCtor.extend({
-    beforeCreate () {
+    beforeCreate() {
       // const vm: Component = this
 
       // TODO: listen on all events and dispatch them to the
@@ -128,7 +129,7 @@ export function resolveVirtualComponent (vnode: MountedComponentVNode): VNode {
 
       registerComponentHook(cid, 'lifecycle', 'create', createVirtualComponent)
     },
-    beforeDestroy () {
+    beforeDestroy() {
       delete this._virtualComponents
     }
   })

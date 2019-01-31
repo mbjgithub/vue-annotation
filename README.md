@@ -47,8 +47,9 @@ new Vue的时候，
 		_self
 		_staticTrees
 		_uid
-		_vnode
-		_watcher
+		_vnode       //当前组件对象的vnode对象
+		_watcher     //当前组件对象的watcher对象
+    _watchers    //当前vm所拥有的watcher集合
 
 	方法
 		$createElement
@@ -113,32 +114,6 @@ new Vue()=>_init()
 更新视图：
 属性变动，执行microtask，执行变动组件的updateComponent，执行进而执行组件的render函数，重新生成vnode，执行update，执行patch，进而执行patchVnode
 
-
-
-attrs: class,id,type,data-,placeholder等
-props: value,innerHTML等
-
-
-vnode的data上挂载有：{
-	attrs,
-	class,
-	staticClass,
-	domProps,
-	on,
-	style,
-	staticStyle
-
-}
-
-
-directives:
-	v-if
-	v-show
-	v-for
-	v-model
-	自定义指令
-
-
 证明下，如果在子孙组件改变祖先组件的state，会不会导致祖先组件的重新渲染，答案是肯定的，我这里之所以这么慢是因为bridge？
         编译        元素操作
 模板语法======>vnode==========>真正UI元素
@@ -149,28 +124,33 @@ web平台props和attrs的区别：像innerHTML，textContent，innerText属于pr
 
 VM原来一直指的是vnode.context
 
+### 一个vnode对应一个dom元素，vnode.children代表的是该元素子dom的vnode结构
 vnode：
   data:
-    attrs,
+    attrs,                      class,id,type,data-,placeholder等
     class,staticClass,
     style,staticStyle,
+    props,                       value,innerHTML等
     domProps,
     on(数据结构：{click:fn1,hover:[fn2,fn3]}),
     transition,
     ref(当前组件所处上下文，也就是处于哪个自定义组件的模板中)(通用模块),
-    directives(通用模块),
+    directives(通用模块),        v-if,v-show,v-for,v-model,自定义指令
   elm:
   
-  componentInstance(组件实例):
+  componentInstance(组件实例):   有这个值的表示是自定义组件，否则就是平台规定的标准元素
     _vnode(组件根元素节点??)
 
   parent(父节点):
 
   children(子节点):
 
+  tag:当前组件根节点元素
+
   context(就是我们在组件内常用的this??):
     $refs
 
+	
 
 1、所以vue core到底干了啥，提供了啥接口，功能
 2、接入vue core的平台有什么便利之处，如web，weex，hippy
@@ -179,3 +159,11 @@ vnode：
 Watcher,Observer,Dep三者的关系
         通知    通知
 Observer====>Dep====>Watcher
+
+
+总结：
+1、为什么data，props里面不允许使用_和$开头的变量？
+   因为data，props属性会被vm代理，可能会找出覆盖
+   
+
+看到Vue.prototype._render，给vm上挂在render-helper

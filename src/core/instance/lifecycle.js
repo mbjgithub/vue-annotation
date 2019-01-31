@@ -53,17 +53,21 @@ export function initLifecycle(vm: Component) {
 }
 
 export function lifecycleMixin(Vue: Class<Component>) {
+  /**
+   * 当前vnode与传入vnode做diff的入口
+   */
   Vue.prototype._update = function (vnode: VNode, hydrating?: boolean) {
     const vm: Component = this
     const prevEl = vm.$el
     const prevVnode = vm._vnode
-    const prevActiveInstance = activeInstance
+    const prevActiveInstance = activeInstance    //全局活动实例
     activeInstance = vm
     vm._vnode = vnode
     // Vue.prototype.__patch__ is injected in entry points
     // based on the rendering backend used.
     if (!prevVnode) {
-      // initial render
+      // initial render，__patch__函数需要根据平台来定制
+      // vnode所代表的dom结构挂在到vm.$el上
       vm.$el = vm.__patch__(vm.$el, vnode, hydrating, false /* removeOnly */)
     } else {
       // updates
@@ -135,13 +139,19 @@ export function lifecycleMixin(Vue: Class<Component>) {
     }
   }
 }
-
+/**
+ * 很关键的一个方法，挂在组件到el上
+ * @param {*} vm
+ * @param {*} el
+ * @param {*} hydrating
+ */
 export function mountComponent(
   vm: Component,
   el: ?Element,
   hydrating?: boolean
 ): Component {
-  vm.$el = el
+  vm.$el = el   //等价于vm.$options.el
+
   if (!vm.$options.render) {
     vm.$options.render = createEmptyVNode
     if (process.env.NODE_ENV !== 'production') {
@@ -162,38 +172,40 @@ export function mountComponent(
       }
     }
   }
+  //挂载前，beforeMount生命周期
   callHook(vm, 'beforeMount')
 
   let updateComponent
   /* istanbul ignore if */
-  console.log("@@@@@@@@@")
-  // if (process.env.NODE_ENV !== 'production' && config.performance && mark) {
-  updateComponent = () => {
-    const name = vm._name
-    const id = vm._uid
-    const startTag = `vue-perf-start:${id}`
-    const endTag = `vue-perf-end:${id}`
+  if (process.env.NODE_ENV !== 'production' && config.performance && mark) {
+    updateComponent = () => {
+      const name = vm._name
+      // 组件实例编号，在initMixin里面
+      const id = vm._uid
+      const startTag = `vue-perf-start:${id}`
+      const endTag = `vue-perf-end:${id}`
 
-    mark(startTag)
-    const vnode = vm._render()
-    console.log("@@@@@@@@@", vnode)
-    mark(endTag)
-    measure(`vue ${name} render`, startTag, endTag)
+      mark(startTag)
+      const vnode = vm._render()      //根据编译好的render函数生成vnode
+      console.log("@@@@@@@@@", vnode)
+      mark(endTag)
+      measure(`vue ${name} render`, startTag, endTag)
 
-    mark(startTag)
-    vm._update(vnode, hydrating)
-    mark(endTag)
-    measure(`vue ${name} patch`, startTag, endTag)
+      mark(startTag)
+      vm._update(vnode, hydrating)   //更新vnode，获取当前组件对应el
+      mark(endTag)
+      measure(`vue ${name} patch`, startTag, endTag)
+    }
+  } else {
+    updateComponent = () => {
+      vm._update(vm._render(), hydrating)
+    }
   }
-  // } else {
-  //   updateComponent = () => {
-  //     vm._update(vm._render(), hydrating)
-  //   }
-  // }
 
   // we set this to vm._watcher inside the watcher's constructor
   // since the watcher's initial patch may call $forceUpdate (e.g. inside child
   // component's mounted hook), which relies on vm._watcher being already defined
+  // Watcher的构造函数里面有调用updateComponent
   new Watcher(vm, updateComponent, noop, {
     before() {
       if (vm._isMounted) {

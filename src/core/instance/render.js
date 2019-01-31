@@ -82,7 +82,8 @@ export function renderMixin(Vue: Class<Component>) {
     // render self
     let vnode
     try {
-      console.log("!!!!!!!", vm._renderProxy)
+      //vm._renderProxy非生产环境下代理了vm，便于在访问vm属性时做出提示，生产环境下直接指向vm
+      //模板被编译模块编译成render和staticRender函数，这里执行render函数调用，生成vnode
       vnode = render.call(vm._renderProxy, vm.$createElement)
     } catch (e) {
       handleError(e, vm, `render`)
