@@ -8,6 +8,13 @@ export const isReservedAttr = makeMap('style,class')
 
 // attributes that should be using props for binding
 const acceptValue = makeMap('input,textarea,option,select,progress')
+/**
+ * web平台元素的某个属性必须要跟props绑定的，不能绑定一个常量，如input元素，就不能<input type='text' :value="'哈哈哈'">eb平台元素的某个属性必须要跟props绑定的，不
+ * 能绑定一个常量，如input元素，就不能<input type='text' :value="'哈哈哈'">
+ * @param {*} tag
+ * @param {*} type
+ * @param {*} attr
+ */
 export const mustUseProp = (tag: string, type: ?string, attr: string): boolean => {
   return (
     (attr === 'value' && acceptValue(tag)) && type !== 'button' ||

@@ -106,9 +106,10 @@
       }
      -->
       <div>
-        <div class="Test" v-if="isShow">
+        <div class="Test" :class="username">
           {{username}}:{{password}}
         </div>
+        <!-- 自定义组件的vnode上有componentInstance -->
         <TestComp :username="username"
                   :password="password"></TestComp>
         <button @click="toggle">切换</button>

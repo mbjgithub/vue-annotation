@@ -1,4 +1,6 @@
-目前进度：platforms/web/runtime/index 的mountComponent
+目前进度：
+  platforms/web/runtime/index 的mountComponent
+  接下来看下patch具体是怎么给元素附加特性的，比如class，style，结合示例demo
 
 vm.$createElement 用于递归创建vnode
 
@@ -22,20 +24,20 @@ new Vue的时候，
 			template: "#demo-template"
 			_base: ƒ Vue(options)
 
-			parent: Vue {_uid: 0, _isVue: true, $options: {…}, _renderProxy: Proxy, _self: Vue, …}
-			propsData: {value: 0, options: Array(2)}
+			parent: Vue {_uid: 0, _isVue: true, $options: {…}, _renderProxy: Proxy, _self: Vue, …}   //父组件实例
+			propsData: {password: "123456",username: "aliarmo"}    //使用组件时候传下来到模板里面的数据
 			_componentTag: "select2"
 			_parentListeners: {input: ƒ}
 			_parentVnode: VNode {tag: "vue-component-1-select2", data: {…}, children: undefined, text: undefined, elm: undefined, …}
 			_renderChildren: [VNode]
 			
 		}
-		$parent
-		$refs
-		$root
-		$scopedSlots
+		$parent               //当前组件的父组件实例
+		$refs                 //当前组件里面包含的dom引用
+		$root                 //根组件实例
+		$scopedSlots      
 		$slots
-		$vnode
+		$vnode                 //组件被引用时候的那个vnode，比如<TestComps></TestComps>
 		_directInactive
 		_events
 		_hasHookEvent
@@ -47,7 +49,7 @@ new Vue的时候，
 		_self
 		_staticTrees
 		_uid
-		_vnode       //当前组件对象的vnode对象
+		_vnode       //当前组件模板根元素所对应的vnode对象
 		_watcher     //当前组件对象的watcher对象
     _watchers    //当前vm所拥有的watcher集合
 
@@ -137,24 +139,43 @@ vnode：
     ref(当前组件所处上下文，也就是处于哪个自定义组件的模板中)(通用模块),
     directives(通用模块),        v-if,v-show,v-for,v-model,自定义指令
   elm:
-  
+  context:  当前vnode所在的父组件实例
+
   componentInstance(组件实例):   有这个值的表示是自定义组件，否则就是平台规定的标准元素
-    _vnode(组件根元素节点??)
 
-  parent(父节点):
+  componentOptions:{
+    Ctor: ƒ VueComponent(options),
+    children: undefined,
+    listeners: undefined,
+    propsData: {password: "123456", username: "aliarmo"},
+    tag: "TestComp"
+  }
+  
+  parent(父节点):       父vnode   
 
-  children(子节点):
+  children(子节点):     子vnode
 
   tag:当前组件根节点元素
 
   context(就是我们在组件内常用的this??):
     $refs
 
-	
+	Vue主要有模板编译、数据驱动(数据绑定)、vnode、patch四大块
 
 1、所以vue core到底干了啥，提供了啥接口，功能
+   (1)数据驱动，更新数据就会自动更新视图，只要做好绑定
+   (2)通过vnode方式，递归生成指定平台视图，
+   (3)更新视图时自动diff
+
 2、接入vue core的平台有什么便利之处，如web，weex，hippy
+
 3、平台如何接入vue core，如web，weex，hippy
+  供core用vnode生成平台元素时候使用
+    提供操作平台内置元素方法，如web平台，需要提供创建、查找和删除等操作元素方法
+    提供操作平台内置元素属性（特性）方法，如web平台，需要提供class和style合并策略，事件绑定，属性等方法
+  具体的平台需要定义一个自己的$mount方法给Vue，将当前组件所代表元素结构挂载到指定元素上
+  如果有需要，可以定义些平台性的组件和指令，比如web平台，提供了v-model和v-show指令
+
 
 Watcher,Observer,Dep三者的关系
         通知    通知
@@ -167,3 +188,72 @@ Observer====>Dep====>Watcher
    
 
 看到Vue.prototype._render，给vm上挂在render-helper
+
+```
+<!-- 模板 -->
+<div>
+  <div class="Test" :class="username">
+    {{username}}:{{password}}
+  </div>
+  <!-- 自定义组件的vnode上有componentInstance -->
+  <TestComp :username="username"
+            :password="password"></TestComp>
+  <button @click="toggle">切换</button>
+</div>
+<!-- 这一段模板执行render之后得到的结果是 -->
+<!-- 然后进行createElm的深度遍历 -->
+{
+  tag:'div',
+  data:{
+    attr:{},
+    on:{},
+    props:{}
+  },
+  children:[{
+    tag:'div',
+    data:{
+      class:'shaniawei',
+      staticClass:'Test'
+    },
+    children:[{
+      tag:'',
+      text:'aliarmo:11111',
+      children:''
+    }]
+  },{
+    tag:'',
+    text:'     ',
+  },{
+    tag:'TestComp',
+    data:{
+      attr:{},
+      hook:{
+        init:fn,
+        prepatch:fn,
+        insert:fn,
+        destroy:fn
+      }
+    },
+    componentOptions:{
+      _Ctor:继承自Vue的构造函数,
+      propsData:{
+        username:'shaniawei',
+        passsword:'11111'
+      },
+      tag:'TestComps'
+    },
+    componentInstance:''
+  },{
+    tag:'',
+    text:'     ',
+  },{
+    tag:'button',
+    data:{
+      attr:{},
+      on:{
+        click:事件处理函数
+      }
+    }
+  }]
+}
+```

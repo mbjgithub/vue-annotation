@@ -20,7 +20,7 @@ import platformDirectives from './directives/index'   //定义web平台的内置
 import platformComponents from './components/index'   //定义web平台的内置组件Transition，TransitionGroup
 
 // install platform specific utils，这些全局方法本来就是vue core暴露给平台使用的
-//web平台元素的某个属性必须要跟props绑定的，不能绑定一个常量，如input元素，就不能<input type='text' :value="'哈哈哈'">
+//web平台元素的某个属性必须要跟props绑定的，不能绑定一个常量，如input元素，就不能<input type='text' :value="'哈哈哈'">eb平台元素的某个属性必须要跟props绑定的，不能绑定一个常量，如input元素，就不能<input type='text' :value="'哈哈哈'">
 Vue.config.mustUseProp = mustUseProp
 //自定义组件不能跟web提供的元素重名，如div，span等
 Vue.config.isReservedTag = isReservedTag

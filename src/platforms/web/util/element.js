@@ -33,11 +33,12 @@ export const isSVG = makeMap(
 
 export const isPreTag = (tag: ?string): boolean => tag === 'pre'
 
+// 自定义组件不能跟web提供的元素重名，如div，span等
 export const isReservedTag = (tag: string): ?boolean => {
   return isHTMLTag(tag) || isSVG(tag)
 }
 
-export function getTagNamespace (tag: string): ?string {
+export function getTagNamespace(tag: string): ?string {
   if (isSVG(tag)) {
     return 'svg'
   }
@@ -49,7 +50,7 @@ export function getTagNamespace (tag: string): ?string {
 }
 
 const unknownElementCache = Object.create(null)
-export function isUnknownElement (tag: string): boolean {
+export function isUnknownElement(tag: string): boolean {
   /* istanbul ignore if */
   if (!inBrowser) {
     return true
