@@ -155,6 +155,7 @@ function initData(vm: Component) {
       proxy(vm, `_data`, key)        //在vm上挂在data中定义的属性
     }
   }
+  console.log(111111111)
   // observe data
   observe(data, true /* asRootData */)        //响应式
 }

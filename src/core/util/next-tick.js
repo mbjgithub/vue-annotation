@@ -8,7 +8,7 @@ import { isIOS, isNative } from './env'
 const callbacks = []
 let pending = false
 
-function flushCallbacks () {
+function flushCallbacks() {
   pending = false
   const copies = callbacks.slice(0)
   callbacks.length = 0
@@ -78,7 +78,7 @@ if (typeof Promise !== 'undefined' && isNative(Promise)) {
  * Wrap a function so that if any code inside triggers state change,
  * the changes are queued using a (macro) task instead of a microtask.
  */
-export function withMacroTask (fn: Function): Function {
+export function withMacroTask(fn: Function): Function {
   return fn._withTask || (fn._withTask = function () {
     useMacroTask = true
     const res = fn.apply(null, arguments)
@@ -87,7 +87,16 @@ export function withMacroTask (fn: Function): Function {
   })
 }
 
-export function nextTick (cb?: Function, ctx?: Object) {
+/**
+ * 下一个macro或者micro task再执行队列里面的任务
+ * 做的操作就是任务放入队列，并开启一个macro或者micro task，
+ * 设置一个标志位标记已经开启了一个macro或者micro task，如果在有任务进来，
+ * 就不要在开启一个macro或者micro task，只有当这个macro或者micro task执行结束，才能
+ * 重新开启一个新的macro或者micro task，
+ * @param {*} cb
+ * @param {*} ctx
+ */
+export function nextTick(cb?: Function, ctx?: Object) {
   let _resolve
   callbacks.push(() => {
     if (cb) {

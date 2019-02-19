@@ -174,7 +174,7 @@ export function mountComponent(
   }
   //挂载前，beforeMount生命周期
   callHook(vm, 'beforeMount')
-
+  console.log('mountComponent')
   let updateComponent
   /* istanbul ignore if */
   if (process.env.NODE_ENV !== 'production' && config.performance && mark) {
@@ -223,7 +223,21 @@ export function mountComponent(
   }
   return vm
 }
-
+/**
+ * 处理slot的TODO
+ * @param {组件实例} vm
+ * @param {组件componentOptions里面的propsData} propsData
+ * @param {组件componentOptions里面的listeners} listeners
+ * @param {组件新的vnode} parentVnode
+ * @param {组件componentOptions里面的children} renderChildren
+ */
+// updateChildComponent(
+//   child,  //组件实例
+//   options.propsData, // updated props
+//   options.listeners, // updated listeners
+//   vnode, // new parent vnode
+//   options.children // new children
+// )
 export function updateChildComponent(
   vm: Component,
   propsData: ?Object,

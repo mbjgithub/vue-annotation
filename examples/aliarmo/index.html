@@ -10,13 +10,15 @@
   <script src="https://unpkg.com/select2@4.0.3"></script>
   <link href="https://unpkg.com/select2@4.0.3/dist/css/select2.min.css" rel="stylesheet">
   <style>
-    html, body {
-        font: 13px/18px sans-serif;
-      }
-      select {
-        min-width: 300px;
-      }
-    </style>
+    html,
+    body {
+      font: 13px/18px sans-serif;
+    }
+
+    select {
+      min-width: 300px;
+    }
+  </style>
 </head>
 
 <body>
@@ -63,6 +65,8 @@
   <script type="text/x-template" id="TestComp-Template">
       <div class="TestComp">
         <p class="TestComp-P" @click="onClick">{{username}}:{{password}}</p>
+        <p>title：{{title}}</p>
+        <p>person.age：{{person.age}}</p>
       </div>
     </script>
 
@@ -106,18 +110,20 @@
       }
      -->
       <div>
-        <div class="Test" :class="username">
+        <div class="Test" :class="username" v-if="isShow">
           {{username}}:{{password}}
         </div>
         <!-- 自定义组件的vnode上有componentInstance -->
         <TestComp :username="username"
-                  :password="password"></TestComp>
+                  :password="password"
+                  :person="person"></TestComp>
         <button @click="toggle">切换</button>
       </div>
     </script>
 
   <script>
-    //   Vue.config.performance
+
+    Vue.config.performance = true
     //   Vue.component('SubComp',{
     //     props:[],
     //     data(){
@@ -234,7 +240,7 @@
     * }
     * */
     Vue.component('TestComp', {
-      props: ['username', 'password'],   //会被标准化
+      props: ['username', 'password', 'person'],   //会被标准化
       template: '#TestComp-Template',    //获取模板，被编译成render和renderStatic函数
       data() {
         return {
@@ -243,7 +249,9 @@
       },
       methods: {
         onClick() {
-          this.$emit('click')
+          // this.$emit('click')
+          this.title = "title changed"
+          this.person.age = 16
         }
       }
     })
@@ -263,13 +271,16 @@
       data: {
         username: "aliarmo",
         password: '123456',
-        isShow: false
+        isShow: true,
+        person: {
+          age: 23
+        }
       },
       created() {
-        setTimeout(() => {
-          this.username = 'shaniawei'
-          this.password = "11111"
-        }, 0)
+        // setTimeout(() => {
+        //   this.username = 'shaniawei'
+        //   this.password = "11111"
+        // }, 0)
       },
       methods: {
         onClick() {

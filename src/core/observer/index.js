@@ -167,8 +167,11 @@ export function defineReactive(
     configurable: true,
     get: function reactiveGetter() {
       const value = getter ? getter.call(obj) : val
+      // 执行render的时候会导致属性的get函数被调用
       if (Dep.target) {
-        dep.depend()   //在Dep.target静态属性里面添加dep实例，也就是在watcher里面添加当前属性对应的dep实例
+        // 将当前组件的某个state所对应的dep跟组件对应的watcher绑定，这个watcher包含当前组件对应的所有dep
+        //在Dep.target静态属性里面添加dep实例，也就是在watcher里面添加当前属性对应的dep实例，并把watcher加到dep的subs里面
+        dep.depend()
         if (childOb) {  //TODO
           childOb.dep.depend()
           if (Array.isArray(value)) {
@@ -197,7 +200,13 @@ export function defineReactive(
         val = newVal
       }
       childOb = !shallow && observe(newVal)
-      dep.notify()   //通知当前dep里面的所有watch更新
+      console.log('queue')
+      //通知当前dep所对应的所有watch更新,其实就是queue watcher咯，
+      // queue的watcher会在下一个nextTick被run，也就是会执行
+      // vm._update(vm._render(), hydrating),重新render，patch
+      // 一个组件对应一个watcher，是观察者，组件的data和props是被观察者，被观察者
+      // 的任何变动会被通知到观察者，以便观察者做出响应
+      dep.notify()
     }
   })
 }

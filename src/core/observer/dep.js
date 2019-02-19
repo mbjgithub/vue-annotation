@@ -46,7 +46,7 @@ export default class Dep {
       subs.sort((a, b) => a.id - b.id)
     }
     for (let i = 0, l = subs.length; i < l; i++) {
-      subs[i].update()
+      subs[i].update()   //执行当前dep所依赖的watcher的update，属性跟dep绑定，组件的多个属性对应多个dep，多个dep指向组件对应的watcher，这个watcher在mountComponent的时候被实例化
     }
   }
 }

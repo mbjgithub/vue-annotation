@@ -53,16 +53,21 @@ const componentVNodeHooks = {
       child.$mount(hydrating ? vnode.elm : undefined, hydrating)
     }
   },
-
+  /**
+   * vnode patch之前会调用
+   * @param {*} oldVnode
+   * @param {*} vnode
+   */
   prepatch(oldVnode: MountedComponentVNode, vnode: MountedComponentVNode) {
     const options = vnode.componentOptions
     const child = vnode.componentInstance = oldVnode.componentInstance
+    //处理slot
     updateChildComponent(
       child,
       options.propsData, // updated props
       options.listeners, // updated listeners
       vnode, // new parent vnode
-      options.children // new children
+      options.children // new children，组件的slot
     )
   },
 

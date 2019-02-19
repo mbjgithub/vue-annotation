@@ -240,6 +240,7 @@ Observer====>Dep====>Watcher
         username:'shaniawei',
         passsword:'11111'
       },
+      children:[],是组件的slot
       tag:'TestComps'
     },
     componentInstance:''
@@ -257,3 +258,16 @@ Observer====>Dep====>Watcher
   }]
 }
 ```
+
+### Vue Watcher体系
+#### 整个体系的建立过程
+1、创建组件实例的时候会对data和props进行observer，
+2、observer会遍历state对state所包含属性重新定义，即defineReactive，重新设定属性描述符的get和set
+3、在mountComponent的时候，会new Wacther，当前watcher实例会被pushTarget，设定为目标watcher，然后执行vm._update(vm._render(), hydrating)，执行render函数导致属性的get函数被调用，每个属性会有一个dep实例，每个dep实例关联到组件对应的watcher，关联后popTarget。
+4、如果有子组件，会导致子组件的实例化，重新执行上述步骤
+#### state变动响应过程
+1、当state变动后，调用属性描述符的set函数，dep会通知到关联的watcher进入到nextTick任务里面，这个watcher实例的run函数包含vm._update(vm._render(), hydrating)，执行这个run函数，导致重新生成vnode，进行patch，经过diff，达到更新UI目的
+#### 总结：
+1、一个组件对应一个观察者，在挂载组件的时候创建这个观察者，mountComponent
+2、组件的state，包含data，props都是被观察者，被观察者的任何变化会被通知到观察者
+3、被观察者的变动导致观察者执行的动作是vm._update(vm._render(), hydrating),组件重新render和patch

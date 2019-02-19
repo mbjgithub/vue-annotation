@@ -117,11 +117,19 @@ export default class Watcher {
    * 获取要监听属性的值
    */
   get() {
-    pushTarget(this)     //当前watcher作为全局watcher
+    console.log('watcher get')
+    // new Watcher(vm, updateComponent, noop, {
+    //   before() {
+    //     if (vm._isMounted) {
+    //       callHook(vm, 'beforeUpdate')
+    //     }
+    //   }
+    // }, true /* isRenderWatcher */)
+    pushTarget(this)     //当前watcher作为全局watcher，可能是上面那个watcher
     let value
     const vm = this.vm
     try {
-      value = this.getter.call(vm, vm)   //获取表达式的值
+      value = this.getter.call(vm, vm)   //获取表达式的值,可能是调用updateComponent
     } catch (e) {
       if (this.user) {
         handleError(e, vm, `getter for watcher "${this.expression}"`)
@@ -193,10 +201,12 @@ export default class Watcher {
   /**
    * Scheduler job interface.
    * Will be called by the scheduler.
+   * 调度中心调用,
+   * 再次执行updateComponent，也就是render,重新生成vnode
    */
   run() {
     if (this.active) {
-      const value = this.get()
+      const value = this.get()   //再次执行updateComponent，也就是render,重新生成vnode
       if (
         value !== this.value ||
         // Deep watchers and watchers on Object/Arrays should fire even
