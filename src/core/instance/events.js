@@ -14,7 +14,7 @@ export function initEvents(vm: Component) {
   vm._hasHookEvent = false
   // init parent attached events
 
-  const listeners = vm.$options._parentListeners
+  const listeners = vm.$options._parentListeners   //当前组件对应的vnode上挂载的事件
   console.log("initEvents", listeners)
   if (listeners) {
     updateComponentListeners(vm, listeners)
@@ -22,7 +22,10 @@ export function initEvents(vm: Component) {
 }
 
 let target: any
-
+// 组件实例监听自定义事件
+// <TestComps @click="onClick"></TestComps>
+// 实现原理其实就是在创建TestComps实例的时候，在实例上监听click事件，待业务在
+// 实例内$emit的时候，执行对应回调即可
 function add(event, fn, once) {
   if (once) {
     target.$once(event, fn)
@@ -34,7 +37,12 @@ function add(event, fn, once) {
 function remove(event, fn) {
   target.$off(event, fn)
 }
-
+/**
+ * 实现自定义组件的自定义事件监听，其实就是vm上监听定义在自定义组件上的事件
+ * @param {*} vm
+ * @param {*} listeners
+ * @param {*} oldListeners
+ */
 export function updateComponentListeners(
   vm: Component,
   listeners: Object,

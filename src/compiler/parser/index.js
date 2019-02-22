@@ -43,7 +43,7 @@ let platformGetTagNamespace
 
 type Attr = { name: string; value: string };
 
-export function createASTElement (
+export function createASTElement(
   tag: string,
   attrs: Array<Attr>,
   parent: ASTElement | void
@@ -61,7 +61,7 @@ export function createASTElement (
 /**
  * Convert HTML string to AST.
  */
-export function parse (
+export function parse(
   template: string,
   options: CompilerOptions
 ): ASTElement | void {
@@ -85,14 +85,14 @@ export function parse (
   let inPre = false
   let warned = false
 
-  function warnOnce (msg) {
+  function warnOnce(msg) {
     if (!warned) {
       warned = true
       warn(msg)
     }
   }
 
-  function closeElement (element) {
+  function closeElement(element) {
     // check pre state
     if (element.pre) {
       inVPre = false
@@ -114,7 +114,15 @@ export function parse (
     shouldDecodeNewlines: options.shouldDecodeNewlines,
     shouldDecodeNewlinesForHref: options.shouldDecodeNewlinesForHref,
     shouldKeepComment: options.comments,
-    start (tag, attrs, unary) {
+    /**
+     *
+     * @param {标签名} tag
+     * @param {属性列表[{name:'class',value:'className'},{id:'idName'}]} attrs
+     * @param {是否为自闭合标签，true表示是} unary
+     */
+    // match.start解析的开始位置, match.end解析的结束位置
+    // options.start(tagName, attrs, unary, match.start, match.end)
+    start(tag, attrs, unary) {
       // check namespace.
       // inherit parent ns if there is one
       const ns = (currentParent && currentParent.ns) || platformGetTagNamespace(tag)
@@ -125,6 +133,14 @@ export function parse (
         attrs = guardIESVGBug(attrs)
       }
 
+      // {
+      //   type: 1,
+      //   tag,
+      //   attrsList: attrs,
+      //   attrsMap: makeAttrsMap(attrs),
+      //   parent,
+      //   children: []
+      // }
       let element: ASTElement = createASTElement(tag, attrs, currentParent)
       if (ns) {
         element.ns = ns
@@ -140,12 +156,16 @@ export function parse (
       }
 
       // apply pre-transforms
+      //解析出部分模板后，<div class="className" style="width:100px">
+      // 调用平台传入的preTransform
       for (let i = 0; i < preTransforms.length; i++) {
         element = preTransforms[i](element, options) || element
       }
 
       if (!inVPre) {
+        // 处理v-pre属性
         processPre(element)
+        // 是否为pre标签
         if (element.pre) {
           inVPre = true
         }
@@ -153,6 +173,7 @@ export function parse (
       if (platformIsPreTag(element.tag)) {
         inPre = true
       }
+      // 如果是pre标签
       if (inVPre) {
         processRawAttrs(element)
       } else if (!element.processed) {
@@ -164,7 +185,7 @@ export function parse (
         processElement(element, options)
       }
 
-      function checkRootConstraints (el) {
+      function checkRootConstraints(el) {
         if (process.env.NODE_ENV !== 'production') {
           if (el.tag === 'slot' || el.tag === 'template') {
             warnOnce(
@@ -207,12 +228,13 @@ export function parse (
         } else if (element.slotScope) { // scoped slot
           currentParent.plain = false
           const name = element.slotTarget || '"default"'
-          ;(currentParent.scopedSlots || (currentParent.scopedSlots = {}))[name] = element
+            ; (currentParent.scopedSlots || (currentParent.scopedSlots = {}))[name] = element
         } else {
           currentParent.children.push(element)
           element.parent = currentParent
         }
       }
+      // 非自闭合元素
       if (!unary) {
         currentParent = element
         stack.push(element)
@@ -221,7 +243,7 @@ export function parse (
       }
     },
 
-    end () {
+    end() {
       // remove trailing whitespace
       const element = stack[stack.length - 1]
       const lastNode = element.children[element.children.length - 1]
@@ -234,7 +256,7 @@ export function parse (
       closeElement(element)
     },
 
-    chars (text: string) {
+    chars(text: string) {
       if (!currentParent) {
         if (process.env.NODE_ENV !== 'production') {
           if (text === template) {
@@ -279,7 +301,7 @@ export function parse (
         }
       }
     },
-    comment (text: string) {
+    comment(text: string) {
       currentParent.children.push({
         type: 3,
         text,
@@ -290,13 +312,13 @@ export function parse (
   return root
 }
 
-function processPre (el) {
+function processPre(el) {
   if (getAndRemoveAttr(el, 'v-pre') != null) {
     el.pre = true
   }
 }
 
-function processRawAttrs (el) {
+function processRawAttrs(el) {
   const l = el.attrsList.length
   if (l) {
     const attrs = el.attrs = new Array(l)
@@ -311,24 +333,36 @@ function processRawAttrs (el) {
     el.plain = true
   }
 }
-
-export function processElement (element: ASTElement, options: CompilerOptions) {
+/**
+ * 处理放在元素上的特殊特性 key，ref，is，slot，slot-scope
+ * 处理平台要求特殊处理的属性，如web平台要求特殊处理class，style
+ * 处理指令 v-bind,v-on,自定义指令
+ * 处理静态属性 如果：id="app"
+ * @param {*} element
+ * @param {*} options
+ */
+export function processElement(element: ASTElement, options: CompilerOptions) {
+  // 处理key <div key="testKey">
   processKey(element)
 
   // determine whether this is a plain element after
   // removing structural attributes
+  // 没有属性没有key，则是文本
   element.plain = !element.key && !element.attrsList.length
 
   processRef(element)
   processSlot(element)
   processComponent(element)
+  // 执行由平台传入的transformNode，比如web
+  // 处理了class，style，其实就是获取class，然后在el上挂载el.staticClass=class
   for (let i = 0; i < transforms.length; i++) {
     element = transforms[i](element, options) || element
   }
+  // 处理剩余的静态属性和动态的数据绑定
   processAttrs(element)
 }
 
-function processKey (el) {
+function processKey(el) {
   const exp = getBindingAttr(el, 'key')
   if (exp) {
     if (process.env.NODE_ENV !== 'production' && el.tag === 'template') {
@@ -338,18 +372,20 @@ function processKey (el) {
   }
 }
 
-function processRef (el) {
+function processRef(el) {
   const ref = getBindingAttr(el, 'ref')
   if (ref) {
     el.ref = ref
-    el.refInFor = checkInFor(el)
+    el.refInFor = checkInFor(el)  // 当前元素或者其祖先元素是否有v-for
   }
 }
 
-export function processFor (el: ASTElement) {
+// 编译v-for
+export function processFor(el: ASTElement) {
   let exp
   if ((exp = getAndRemoveAttr(el, 'v-for'))) {
-    const res = parseFor(exp)
+    // v-for="(item,index) in items"
+    const res = parseFor(exp)  // 解析表达式
     if (res) {
       extend(el, res)
     } else if (process.env.NODE_ENV !== 'production') {
@@ -359,37 +395,40 @@ export function processFor (el: ASTElement) {
     }
   }
 }
-
+// v-for="(item,index) in items"
 type ForParseResult = {
-  for: string;
-  alias: string;
-  iterator1?: string;
+  for: string;         // items名字
+  alias: string;       // item
+  iterator1?: string;  // index
   iterator2?: string;
 };
 
-export function parseFor (exp: string): ?ForParseResult {
+export function parseFor(exp: string): ?ForParseResult {
+  // matched[1] (item,index)或者item
+  // matched[2] items
   const inMatch = exp.match(forAliasRE)
   if (!inMatch) return
   const res = {}
-  res.for = inMatch[2].trim()
-  const alias = inMatch[1].trim().replace(stripParensRE, '')
+  res.for = inMatch[2].trim()  //获取items名字
+  const alias = inMatch[1].trim().replace(stripParensRE, '')  //如果有括号，去掉括号
   const iteratorMatch = alias.match(forIteratorRE)
   if (iteratorMatch) {
-    res.alias = alias.replace(forIteratorRE, '').trim()
-    res.iterator1 = iteratorMatch[1].trim()
+    res.alias = alias.replace(forIteratorRE, '').trim()   // 获取item名字
+    res.iterator1 = iteratorMatch[1].trim()  // 获取index名字
     if (iteratorMatch[2]) {
-      res.iterator2 = iteratorMatch[2].trim()
+      res.iterator2 = iteratorMatch[2].trim() // 获取index后面名字
     }
   } else {
     res.alias = alias
   }
   return res
 }
-
-function processIf (el) {
+// 编译v-if，v-else-if，v-else
+function processIf(el) {
   const exp = getAndRemoveAttr(el, 'v-if')
   if (exp) {
     el.if = exp
+    // 添加if的condition到el上
     addIfCondition(el, {
       exp: exp,
       block: el
@@ -405,7 +444,7 @@ function processIf (el) {
   }
 }
 
-function processIfConditions (el, parent) {
+function processIfConditions(el, parent) {
   const prev = findPrevElement(parent.children)
   if (prev && prev.if) {
     addIfCondition(prev, {
@@ -420,7 +459,7 @@ function processIfConditions (el, parent) {
   }
 }
 
-function findPrevElement (children: Array<any>): ASTElement | void {
+function findPrevElement(children: Array<any>): ASTElement | void {
   let i = children.length
   while (i--) {
     if (children[i].type === 1) {
@@ -437,21 +476,21 @@ function findPrevElement (children: Array<any>): ASTElement | void {
   }
 }
 
-export function addIfCondition (el: ASTElement, condition: ASTIfCondition) {
+export function addIfCondition(el: ASTElement, condition: ASTIfCondition) {
   if (!el.ifConditions) {
     el.ifConditions = []
   }
   el.ifConditions.push(condition)
 }
-
-function processOnce (el) {
+// 编译v-once
+function processOnce(el) {
   const once = getAndRemoveAttr(el, 'v-once')
   if (once != null) {
     el.once = true
   }
 }
-
-function processSlot (el) {
+// TODO slot
+function processSlot(el) {
   if (el.tag === 'slot') {
     el.slotName = getBindingAttr(el, 'name')
     if (process.env.NODE_ENV !== 'production' && el.key) {
@@ -500,7 +539,8 @@ function processSlot (el) {
   }
 }
 
-function processComponent (el) {
+// 处理<component :is="testComps" />
+function processComponent(el) {
   let binding
   if ((binding = getBindingAttr(el, 'is'))) {
     el.component = binding
@@ -509,24 +549,28 @@ function processComponent (el) {
     el.inlineTemplate = true
   }
 }
-
-function processAttrs (el) {
-  const list = el.attrsList
+/**
+ * 处理动态绑定的属性：:username="username | filter", @click="onClick"，v-permission="value"
+ * 处理静态属性：id="app" data-index="index"
+ * @param {*} el
+ */
+function processAttrs(el) {
+  const list = el.attrsList  // 前面已经处理过的attrs已经被移除过的了
   let i, l, name, rawName, value, modifiers, isProp
   for (i = 0, l = list.length; i < l; i++) {
     name = rawName = list[i].name
     value = list[i].value
-    if (dirRE.test(name)) {
+    if (dirRE.test(name)) {     // 动态绑定的属性@,v-,:
       // mark element as dynamic
       el.hasBindings = true
       // modifiers
-      modifiers = parseModifiers(name)
+      modifiers = parseModifiers(name)  // 解析出修饰符
       if (modifiers) {
-        name = name.replace(modifierRE, '')
+        name = name.replace(modifierRE, '')  //移除修饰符
       }
       if (bindRE.test(name)) { // v-bind
         name = name.replace(bindRE, '')
-        value = parseFilters(value)
+        value = parseFilters(value)  // 解析出filter
         isProp = false
         if (
           process.env.NODE_ENV !== 'production' &&
@@ -537,41 +581,44 @@ function processAttrs (el) {
           )
         }
         if (modifiers) {
+          // 通过 prop 修饰符绑定 DOM 属性
           if (modifiers.prop) {
-            isProp = true
+            isProp = true   // 有prop修饰符
             name = camelize(name)
             if (name === 'innerHtml') name = 'innerHTML'
           }
+          // 通过 camel 修饰符对绑定的属性进行驼峰命名
           if (modifiers.camel) {
             name = camelize(name)
           }
+          // sync修饰符是prop 进行“双向绑定”的语法糖
           if (modifiers.sync) {
             addHandler(
               el,
-              `update:${camelize(name)}`,
-              genAssignmentCode(value, `$event`)
+              `update:${camelize(name)}`,  //事件名
+              genAssignmentCode(value, `$event`)  //TODO，事件处理函数
             )
           }
         }
         if (isProp || (
           !el.component && platformMustUseProp(el.tag, el.attrsMap.type, name)
         )) {
-          addProp(el, name, value)
+          addProp(el, name, value)  // :value="val"或者:innerHtml.prop="啦啦啦啦"
         } else {
-          addAttr(el, name, value)
+          addAttr(el, name, value) // :username="username"
         }
       } else if (onRE.test(name)) { // v-on
         name = name.replace(onRE, '')
-        addHandler(el, name, value, modifiers, false, warn)
+        addHandler(el, name, value, modifiers, false, warn)   //处理事件
       } else { // normal directives
-        name = name.replace(dirRE, '')
+        name = name.replace(dirRE, '')      // v-permission.foo.bar:param="value"
         // parse arg
         const argMatch = name.match(argRE)
-        const arg = argMatch && argMatch[1]
+        const arg = argMatch && argMatch[1] //获取到传给指令的参数
         if (arg) {
-          name = name.slice(0, -(arg.length + 1))
+          name = name.slice(0, -(arg.length + 1))  // 获取指令名称
         }
-        addDirective(el, name, rawName, value, arg, modifiers)
+        addDirective(el, name, rawName, value, arg, modifiers)   //添加解析出来的指令
         if (process.env.NODE_ENV !== 'production' && name === 'model') {
           checkForAliasModel(el, value)
         }
@@ -593,15 +640,18 @@ function processAttrs (el) {
       // #6887 firefox doesn't update muted state if set via attribute
       // even immediately after element creation
       if (!el.component &&
-          name === 'muted' &&
-          platformMustUseProp(el.tag, el.attrsMap.type, name)) {
+        name === 'muted' &&
+        platformMustUseProp(el.tag, el.attrsMap.type, name)) {
         addProp(el, name, 'true')
       }
     }
   }
 }
-
-function checkInFor (el: ASTElement): boolean {
+/**
+ * 找当前el及其parent中是否有v-for
+ * @param {*} el
+ */
+function checkInFor(el: ASTElement): boolean {
   let parent = el
   while (parent) {
     if (parent.for !== undefined) {
@@ -612,7 +662,7 @@ function checkInFor (el: ASTElement): boolean {
   return false
 }
 
-function parseModifiers (name: string): Object | void {
+function parseModifiers(name: string): Object | void {
   const match = name.match(modifierRE)
   if (match) {
     const ret = {}
@@ -621,7 +671,7 @@ function parseModifiers (name: string): Object | void {
   }
 }
 
-function makeAttrsMap (attrs: Array<Object>): Object {
+function makeAttrsMap(attrs: Array<Object>): Object {
   const map = {}
   for (let i = 0, l = attrs.length; i < l; i++) {
     if (
@@ -636,11 +686,11 @@ function makeAttrsMap (attrs: Array<Object>): Object {
 }
 
 // for script (e.g. type="x/template") or style, do not decode content
-function isTextTag (el): boolean {
+function isTextTag(el): boolean {
   return el.tag === 'script' || el.tag === 'style'
 }
 
-function isForbiddenTag (el): boolean {
+function isForbiddenTag(el): boolean {
   return (
     el.tag === 'style' ||
     (el.tag === 'script' && (
@@ -654,7 +704,7 @@ const ieNSBug = /^xmlns:NS\d+/
 const ieNSPrefix = /^NS\d+:/
 
 /* istanbul ignore next */
-function guardIESVGBug (attrs) {
+function guardIESVGBug(attrs) {
   const res = []
   for (let i = 0; i < attrs.length; i++) {
     const attr = attrs[i]
@@ -666,7 +716,7 @@ function guardIESVGBug (attrs) {
   return res
 }
 
-function checkForAliasModel (el, value) {
+function checkForAliasModel(el, value) {
   let _el = el
   while (_el) {
     if (_el.for && _el.alias === value) {

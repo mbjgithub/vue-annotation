@@ -3,11 +3,11 @@
 import { emptyObject } from 'shared/util'
 import { parseFilters } from './parser/filter-parser'
 
-export function baseWarn (msg: string) {
+export function baseWarn(msg: string) {
   console.error(`[Vue compiler]: ${msg}`)
 }
 
-export function pluckModuleFunction<F: Function> (
+export function pluckModuleFunction<F: Function>(
   modules: ?Array<Object>,
   key: string
 ): Array<F> {
@@ -15,24 +15,34 @@ export function pluckModuleFunction<F: Function> (
     ? modules.map(m => m[key]).filter(_ => _)
     : []
 }
-
-export function addProp (el: ASTElement, name: string, value: string) {
+/**
+ * 给el挂载props
+ * @param {*} el
+ * @param {*} name
+ * @param {*} value
+ */
+export function addProp(el: ASTElement, name: string, value: string) {
   (el.props || (el.props = [])).push({ name, value })
   el.plain = false
 }
-
-export function addAttr (el: ASTElement, name: string, value: any) {
+/**
+ * 给el挂载attrs
+ * @param {*} el
+ * @param {*} name
+ * @param {*} value
+ */
+export function addAttr(el: ASTElement, name: string, value: any) {
   (el.attrs || (el.attrs = [])).push({ name, value })
   el.plain = false
 }
 
 // add a raw attr (use this in preTransforms)
-export function addRawAttr (el: ASTElement, name: string, value: any) {
+export function addRawAttr(el: ASTElement, name: string, value: any) {
   el.attrsMap[name] = value
   el.attrsList.push({ name, value })
 }
 
-export function addDirective (
+export function addDirective(
   el: ASTElement,
   name: string,
   rawName: string,
@@ -44,7 +54,28 @@ export function addDirective (
   el.plain = false
 }
 
-export function addHandler (
+// capture:  Boolean，表示 listener 会在该类型的事件捕获阶段传播到该 EventTarget 时触发。
+// once:  Boolean，表示 listener 在添加之后最多只调用一次。如果是 true， listener 会在其被调用之后自动移除。
+// passive: Boolean，表示 listener 永远不会调用 preventDefault()。如果 listener 仍然调用了这个函数，客户端将会忽略它并抛出一个控制台警告。
+
+// addHandler(
+//   el,
+//   `update:${camelize(name)}`,
+//   genAssignmentCode(value, `$event`)  //TODO
+// )
+// el.events={
+//   `update:${camelize(name)}`: genAssignmentCode(value, `$event`)
+// }
+/**
+ *
+ * @param {*} el
+ * @param {事件名} name
+ * @param {处理函数} value
+ * @param {修饰符} modifiers
+ * @param {*} important
+ * @param {*} warn
+ */
+export function addHandler(
   el: ASTElement,
   name: string,
   value: string,
@@ -70,14 +101,15 @@ export function addHandler (
   // the only target envs that have right/middle clicks.
   if (name === 'click') {
     if (modifiers.right) {
-      name = 'contextmenu'
+      name = 'contextmenu'   // right修饰符 只当点击鼠标右键时触发
       delete modifiers.right
     } else if (modifiers.middle) {
-      name = 'mouseup'
+      name = 'mouseup'   // middle修饰符 只当点击鼠标中键时触发
     }
   }
 
   // check capture modifier
+  // 添加事件侦听器时使用 capture 模式
   if (modifiers.capture) {
     delete modifiers.capture
     name = '!' + name // mark the event as captured
@@ -87,12 +119,14 @@ export function addHandler (
     name = '~' + name // mark the event as once
   }
   /* istanbul ignore if */
+  // 以 { passive: true } 模式添加侦听器，也就是不允许在回调中阻止默认行为
   if (modifiers.passive) {
     delete modifiers.passive
     name = '&' + name // mark the event as passive
   }
 
   let events
+  // native修饰符 监听组件根元素的原生事件
   if (modifiers.native) {
     delete modifiers.native
     events = el.nativeEvents || (el.nativeEvents = {})
@@ -109,6 +143,7 @@ export function addHandler (
 
   const handlers = events[name]
   /* istanbul ignore if */
+  // 一个事件对于多个handler
   if (Array.isArray(handlers)) {
     important ? handlers.unshift(newHandler) : handlers.push(newHandler)
   } else if (handlers) {
@@ -119,8 +154,15 @@ export function addHandler (
 
   el.plain = false
 }
-
-export function getBindingAttr (
+/**
+ * 获取到动态绑定的属性的值或者静态的值
+ * 动态绑定的值可能有filter，会被编译成
+ * :class="classStr | filter('hahaha')"    _f("filter")(classStr,'hahaha')
+ * @param {*} el
+ * @param {*} name
+ * @param {*} getStatic
+ */
+export function getBindingAttr(
   el: ASTElement,
   name: string,
   getStatic?: boolean
@@ -142,7 +184,13 @@ export function getBindingAttr (
 // doesn't get processed by processAttrs.
 // By default it does NOT remove it from the map (attrsMap) because the map is
 // needed during codegen.
-export function getAndRemoveAttr (
+/**
+ * 从attrsMap里面获取属性值，并从attrList里面删除对应的属性项
+ * @param {*} el
+ * @param {*} name
+ * @param {*} removeFromMap
+ */
+export function getAndRemoveAttr(
   el: ASTElement,
   name: string,
   removeFromMap?: boolean

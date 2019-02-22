@@ -6,8 +6,21 @@ import {
   getBindingAttr,
   baseWarn
 } from 'compiler/helpers'
-
-function transformNode (el: ASTElement, options: CompilerOptions) {
+/**
+ *   attrsList: [{name: "class", value: "Test"}
+ *                     {name: ":class", value: "username"}
+ *                     {name: "v-show", value: "isShow"}]
+ *   attrsMap: {class: "Test", :class: "username", v-show: "isShow"}
+ *   children: []
+ *   parent: {type: 1, tag: "div", attrsList: [], attrsMap: {}, parent: undefined}
+ *   plain: false
+ *   tag: "div"
+ *   type: 1
+ * @param {*} el
+ * @param {*} options
+ * 从ASTElement的attrs里面解析出staticClass，classBinding
+ */
+function transformNode(el: ASTElement, options: CompilerOptions) {
   const warn = options.warn || baseWarn
   const staticClass = getAndRemoveAttr(el, 'class')
   if (process.env.NODE_ENV !== 'production' && staticClass) {
@@ -24,13 +37,13 @@ function transformNode (el: ASTElement, options: CompilerOptions) {
   if (staticClass) {
     el.staticClass = JSON.stringify(staticClass)
   }
-  const classBinding = getBindingAttr(el, 'class', false /* getStatic */)
+  const classBinding = getBindingAttr(el, 'class', false /* getStatic */)  //类名绑定的值,:class="classObj"
   if (classBinding) {
     el.classBinding = classBinding
   }
 }
 
-function genData (el: ASTElement): string {
+function genData(el: ASTElement): string {
   let data = ''
   if (el.staticClass) {
     data += `staticClass:${el.staticClass},`

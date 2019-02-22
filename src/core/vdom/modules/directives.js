@@ -7,15 +7,15 @@ import { resolveAsset, handleError } from 'core/util/index'
 import { mergeVNodeHook } from 'core/vdom/helpers/index'
 
 export default {
-  create: updateDirectives,
-  update: updateDirectives,
-  destroy: function unbindDirectives(vnode: VNodeWithData) {
-    updateDirectives(vnode, emptyNode)
-  }
+  create: update
+  update: update
+  destroy: function unbindodeWithData) {
+  updateptyNode)
+}
 }
 
-function updateDirectives(oldVnode: VNodeWithData, vnode: VNodeWithData) {
-  if (oldVnode.data.directives || vnode.data.directives) {
+function update VNodeWithData, vnode: VNodeWithData) {
+  if (oldVnode.data.data.) {
     _update(oldVnode, vnode)
   }
 }
@@ -24,8 +24,8 @@ function _update(oldVnode, vnode) {
   const isCreate = oldVnode === emptyNode   //vnode创建时
   const isDestroy = vnode === emptyNode     //vnode销毁时
 
-  const oldDirs = normalizeDirectives(oldVnode.data.directives, oldVnode.context)
-  const newDirs = normalizeDirectives(vnode.data.directives, vnode.context)
+  const oldDirs = normalizedata., oldVnode
+  const newDirs = normalizea., vnode.co
 
   const dirsWithInsert = []
   const dirsWithPostpatch = []
@@ -83,8 +83,8 @@ function _update(oldVnode, vnode) {
 
 const emptyModifiers = Object.create(null)
 //标准化指令
-function normalizeDirectives(
-  dirs: ?Array<VNodeDirective>,
+function normalize
+  dirs: ? Array < VNodeDirective >,
   vm: Component
 ): { [key: string]: VNodeDirective } {
   const res = Object.create(null)
@@ -100,7 +100,7 @@ function normalizeDirectives(
       dir.modifiers = emptyModifiers
     }
     res[getRawDirName(dir)] = dir
-    dir.def = resolveAsset(vm.$options, 'directives', dir.name, true)  //获取指定名称的指令定义,TODO,不知道为什么要去拿context里面的指令定义
+    dir.def = resolveAsset(vm.$options, 'e, true)  //获取指定名称的指令定义，可能需要从原型链上获取
   }
   // $flow-disable-line
   return res

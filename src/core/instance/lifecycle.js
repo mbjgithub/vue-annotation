@@ -29,6 +29,7 @@ export function initLifecycle(vm: Component) {
 
   // locate first non-abstract parent
   //找到父组件中第一个非抽象组件，抽象组件是不会渲染UI出来的
+  // keep-alive就是抽象组件
   let parent = options.parent  //在$options里面找到父亲
   if (parent && !options.abstract) {
     while (parent.$options.abstract && parent.$parent) {
@@ -92,7 +93,7 @@ export function lifecycleMixin(Vue: Class<Component>) {
   Vue.prototype.$forceUpdate = function () {
     const vm: Component = this
     if (vm._watcher) {
-      vm._watcher.update()
+      vm._watcher.update()  //立即更新当前组件
     }
   }
 
@@ -109,6 +110,7 @@ export function lifecycleMixin(Vue: Class<Component>) {
       remove(parent.$children, vm)
     }
     // teardown watchers
+    // 销毁watcher
     if (vm._watcher) {
       vm._watcher.teardown()
     }
@@ -217,6 +219,7 @@ export function mountComponent(
 
   // manually mounted instance, call mounted on self
   // mounted is called for render-created child components in its inserted hook
+  // vm.$vnode指向当前组件vnode，<TestComps></TestComps>
   if (vm.$vnode == null) {
     vm._isMounted = true
     callHook(vm, 'mounted')

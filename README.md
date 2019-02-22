@@ -1,7 +1,7 @@
 目前进度：
   platforms/web/runtime/index 的mountComponent
   接下来看下patch具体是怎么给元素附加特性的，比如class，style，结合示例demo
-
+  接下来看compile下的parser下的html-parser，parseText
 vm.$createElement 用于递归创建vnode
 
 new Vue的时候，
@@ -151,7 +151,7 @@ vnode：
     tag: "TestComp"
   }
   
-  parent(父节点):       父vnode   
+  parent(父节点):       父vnode，只有自定义组件对应的根元素对应的vnode才有parent，指向<TestComps></TestComps>
 
   children(子节点):     子vnode
 
@@ -259,15 +259,185 @@ Observer====>Dep====>Watcher
 }
 ```
 
+假定有如下结构的模板
+```
+// new Vue的template，对应的实例记为vm1
+<div vnode1>
+  <p vnode2></p>
+  <TestComps vnode3
+             testAttr="hahha"
+             @click="clicked"
+             :username="username"
+             :password="password"></TestComps>
+</div>
+
+// TestComps的template，对应的实例记为vm2
+<div vnode4>
+  <span vnode5></span>
+  <p vnode6></p>
+</div>
+```
+生成的vnode的关系树为
+```
+vnode1={
+  tag:'div',
+  children:[vnode2,vnode3]
+}
+vnode3={
+  tag:'TestComps',
+  children:undefined,
+  parent:undefined
+}
+vnode4={
+  tag:'div',
+  children:[vnode5,vnode6],
+  parent:vnode3             //这一点关系很重要
+}
+```
+生成的vm关系树为
+```
+vm1={
+  $data:{password: "123456",username: "aliarmo"} //组件对应state
+	$props:{} //使用组件时候传下来到模板里面的数据
+  $attrs:{},
+  $children:[vm2],             
+  $listeners:{}
+  $options: {
+    components: {}
+    parent: undefined   //父组件实例
+    propsData: undefined    //使用组件时候传下来到模板里面的数据
+    _parentVnode: undefined 
+  }
+  $parent:undefiend               //当前组件的父组件实例
+  $refs:{}                 //当前组件里面包含的dom引用
+  $root:vm1                 //根组件实例
+  $vnode:undefined                 //组件被引用时候的那个vnode，比如<TestComps></TestComps>
+  _vnode:vnode1       //当前组件模板根元素所对应的vnode对象
+}
+
+vm2={
+  $data:{} //组件对应state
+	$props:{password: "123456",username: "aliarmo"} //使用组件时候传下来到模板里面的数据
+  $attrs:{testAttr:'hahha'},
+  $children:[],             
+  $listeners:{click:fn}
+  $options: {
+    components: {}
+    parent: vm1   //父组件实例
+    propsData: {password: "123456",username: "aliarmo"}    //使用组件时候传下来到模板里面的数据
+    _parentVnode: vnode3 
+  }
+  $parent:vm1               //当前组件的父组件实例
+  $refs:{}                 //当前组件里面包含的dom引用
+  $root:vm1                 //根组件实例
+  $vnode:vnode3                 //组件被引用时候的那个vnode，比如<TestComps></TestComps>
+  _vnode:vnode4       //当前组件模板根元素所对应的vnode对象
+}
+```
+
+
 ### Vue Watcher体系
-#### 整个体系的建立过程
+#### 整个体系的建立过程：
 1、创建组件实例的时候会对data和props进行observer，
 2、observer会遍历state对state所包含属性重新定义，即defineReactive，重新设定属性描述符的get和set
 3、在mountComponent的时候，会new Wacther，当前watcher实例会被pushTarget，设定为目标watcher，然后执行vm._update(vm._render(), hydrating)，执行render函数导致属性的get函数被调用，每个属性会有一个dep实例，每个dep实例关联到组件对应的watcher，关联后popTarget。
 4、如果有子组件，会导致子组件的实例化，重新执行上述步骤
-#### state变动响应过程
+#### state变动响应过程：
 1、当state变动后，调用属性描述符的set函数，dep会通知到关联的watcher进入到nextTick任务里面，这个watcher实例的run函数包含vm._update(vm._render(), hydrating)，执行这个run函数，导致重新生成vnode，进行patch，经过diff，达到更新UI目的
 #### 总结：
 1、一个组件对应一个观察者，在挂载组件的时候创建这个观察者，mountComponent
 2、组件的state，包含data，props都是被观察者，被观察者的任何变化会被通知到观察者
 3、被观察者的变动导致观察者执行的动作是vm._update(vm._render(), hydrating),组件重新render和patch
+观察者包含对变动做出响应的定义，一个组件对应一个观察者对应组件里面的所有被观察者，被观察者可能被用于其他组件，那么一个被观察者会对应多个观察者，当被观察者发生变动时，通知到所有观察者做出更新响应。
+PS：
+* 观察者对应Watcher
+* 响应就是vm._update(vm._render(), hydrating)
+* 被观察者是state，用Dep来连接state与Watcher
+
+
+### Vue vnode diff算法
+#### vnode diff 概念：
+##### vnode
+vnode是虚拟node节点，是具体平台元素对象的进一步抽象，每一个元素对应一个vnode，可通过vnode结构完整还原具体平台元素结构。
+下面以web平台来解释vnode。对于web，假定有如下结构：
+```
+<div class="box" @click="onClick">------------------对应一个vnode
+ <p class="content">哈哈</p>-------对应一个vnode
+ <div></div>-----------------------对应一个vnode
+</div>
+```
+经过Vue的compile模块将生成渲染函数，执行这个渲染函数就会生成对应的vnode结构：
+```
+//这里我只列出关键的vnode信息
+{
+  tag:'div',
+  data:{attr:{},staticClass:'box',on:{click:onClick}},
+  children:[{
+    tag:'p',
+    data:{attr:{},staticClass:'content',on:{}},
+    children:[{
+      tag:'',
+      data:{},
+      text:'哈哈'
+    }]
+  },{
+    tag:'div',
+    data:{attr:{},on:{}},
+  }]  
+}
+```
+最外层的div对应一个vnode，包含两个孩子vnode
+##### sameVnode，需要同时满足1&&2，或者1&&3
+1、vnode的key值相等，例如 <Comps1 key="key1" />,<Comps2 key="key2" />，key值就不相等，<Comps1 key="key1" />,<Comps2 key="key1" />，key值就是相等的，<div></div>,<p></p>,这两个的key值是undefined，key值相等，这个是sameVnode的大前提
+2、vnode的tag相同，都是注释或者都不是注释，同时定义或未定义data，标签为input则type必须相同，vnode.data.domProps.innerHTML || vnode.data.domProps.textContent为false
+3、isAsyncPlaceholder,asyncFactory
+
+
+#### 整个vnode diff流程：
+大前提，要看懂这个vnode diff，务必先明白vnode是啥，如何生成的，vnode与elm的关系
+1、如果两个vnode是sameVnode，则进行patch vnode
+2、patch vnode
+（1）首先vnode的elm指向oldVnode的elm
+（2）使用vnode的数据更新elm的attr，class，style，domProps，events等
+（3）如果vnode是文本节点，则直接设置elm的text，结束
+（4）如果vnode是非文本节点&&有孩子&&oldVnode没有孩子，则elm直接append
+（5）如果vnode是非文本节点&&没有孩子&&oldVnode有孩子,则直接移除elm的孩子节点
+（6）如果非文本节点&&都有孩子节点，则updateChildren，进入diff 算法
+3、diff 算法
+```
+//oldVnode对应的dom结构,这里以web平台为例
+<div>
+  <div class="header" :class="topHeader">
+    <div :class="innerClass"></div>
+  </div>
+  <p key="p1">{{content}}</p>
+  <span class="icon">我是icon</span>
+</div>
+
+//vnode对应的dom结构,这里以web平台为例
+<div>
+  <div class="header" :class="topHeader">
+    <div :class="innerClass"></div>
+  </div>
+  <p key="p1">{{content}}</p>
+  <span class="icon">我是icon</span>
+</div>
+```
+假设给定上面结构，如何用newChildrenVnodes替换oldChildrenVnodes，最简单的方式莫过于，遍历newChildrenVnodes，直接重新生成这个html片段，皆大欢喜。但是这样做会
+不断的createElement，对性能有影响，于是前辈们就想出了这个diff算法，diff算法的原理是通过移动、新增、删除和替换oldChildrenVnodes对应的结构来生成newChildrenVnodes对应的结构，并且每个元素只能被复用一次。要明确传入diff算法的是两个sameVnode的孩子节点，从两者的开头和结尾位置，同时往中间靠，直到两者中的一个到达中间。
+
+（1）取两者最左边的节点，判断是否为sameVnode，如果是则进行上述的第二步，整个流程走完后，此时elm的class，style，events等已经更新了，elm的children结构也通过前面说的整个流程得到了更新，这时候就看是否需要移动这个elm了，因为都是孩子的最左边节点，因此位置不变，最左边节点位置向前移动一步
+（2）如果不是（1）所述case，取两者最右边的节点，跟（1）的判定流程一样，不过是最右边节点位置向前移动一步
+（3）如果不是（1）（2）所述case，取oldChildrenVnodes最左边节点和newChildrenVnodes最右边节点，跟（1）的判定流程一样，不过，elm的位置需要移动到oldVnode最右边elm的右边，因为vnode取的是最右边节点，如果与oldVnode的最右边节点是sameVnode的话，位置是不用改变的，因此newChildrenVnodes的最右节点和oldChildrenVnodes的最右节点位置是对应的，但由于是复用的oldChildrenVnodes的最左边节点，oldChildrenVnodes最右边节点还没有被复用，因此不能替换掉，所以移动到oldChildrenVnodes最右边elm的右边。然后oldChildrenVnodes最左边节点位置向前移动一步，newChildrenVnodes最右边节点位置向前移动一步
+（4）如果不是（1）（2）（3）所述case，取oldChildrenVnodes最右边节点和newChildrenVnodes最左边节点，跟（1）的判定流程一样，不过，elm的位置需要移动到oldChildrenVnodes最左边elm的左边，因为vnode取的是最左边节点，如果与oldChildrenVnodes的最左边节点是sameVnode的话，位置是不用改变的，因此newChildrenVnodes的最左节点和oldChildrenVnodes的最左节点位置是对应的，但由于是复用的oldChildrenVnodes的最右边节点，oldChildrenVnodes最左边节点还没有被复用，因此不能替换掉，所以移动到oldChildrenVnodes最左边elm的左边。然后oldChildrenVnodes最右边节点位置向前移动一步，newChildrenVnodes最左边节点位置向前移动一步
+（5）如果不是（1）（2）（3）（4）所述case，在oldChildrenVnodes中寻找与newChildrenVnodes最左边节点是sameVnode的oldVnode，跟（1）的判定流程一样，不过插入的位置是oldChildrenVnodes的最左边节点的左边，因为如果newChildrenVnodes最左边节点与oldChildrenVnodes最左边节点是sameVnode的话，位置是不用变的，并且复用的是oldChildrenVnodes中找到的oldVNode的elm。被复用过的oldVnode后面不会再被取出来。然后newChildrenVnodes最左边节点位置向前移动一步
+（6）经过上述步骤，oldChildrenVnodes或者newChildrenVnodes的最左节点与最右节点重合，退出循坏
+（7）如果是oldChildrenVnodes的最左节点与最右节点先重合，说明newChildrenVNodes还有节点没有被插入，递归创建这些节点对应元素，然后插入到oldChildrenVnodes的最左节点的右边或者最右节点的左边，因为是从两者的开始和结束位置向中间靠拢，想想，如果newChildrenVNodes剩余的第一个节点与oldChildrenVnodes的最左边节点为sameVnode的话，位置是不用变的
+（8）如果是newChildrenVnodes的最左节点与最右节点先重合，说明oldChildrenVnodes中有一段结构没有被复用，开始和结束位置向中间靠拢，因此没有被复用的位置是oldChildrenVnodes的最左边和最右边节点，删除节点对应的elm即可
+
+
+### 从源码看出的优化点
+1. 组件越小越好，特别是列表渲染，列表项最好做出组件的形式，这样state变化造成的改变是最小的，比如你改变列表项某个state值，那么最终更新的就是使用了这个state的组件，其他的组件不会被通知到更新，来自watcher
+
+
+编译后的结果只有在具体的上下文中才能发挥效力

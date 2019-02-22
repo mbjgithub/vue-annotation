@@ -76,17 +76,23 @@
       vnode:{
         tag:'div',
         children:[{
-          tag:undefined
+          tag:'div',
+          data:{
+            class: "aliarmo"
+            directives: [{name: "show", rawName: "v-show", value: true, expression: "isShow"}]
+            staticClass: "Test
+          }
         },{
           tag:undefined
         },{
           tag:"vue-component-1-TestComp",
           componentOptions:{
             propsData: {password: "123456", username: "aliarmo"},
-            tag: "TestComp"
+            tag: "TestComp",
+            listeners:{click:onTestCompsClicked}   //<TestComps @click="onTestCompsClicked"></TestComps>
           },
           data:{
-            attrs: {},
+            attrs: {test:'hahhaha'},
             hook: {init: ƒ, prepatch: ƒ, insert: ƒ, destroy: ƒ},
             on: undefined
           }
@@ -110,11 +116,15 @@
       }
      -->
       <div>
-        <div class="Test" :class="username" v-if="isShow">
+        <div class="Test" :class="username" v-show="isShow">
           {{username}}:{{password}}
         </div>
+        <p>age:{{person.age}}</p>
+        <p>gender:{{person.gender}}</p>
         <!-- 自定义组件的vnode上有componentInstance -->
-        <TestComp :username="username"
+        <TestComp test="hahhaha"
+                  @click="onTestCompsClicked"
+                  :username="username"
                   :password="password"
                   :person="person"></TestComp>
         <button @click="toggle">切换</button>
@@ -251,7 +261,7 @@
         onClick() {
           // this.$emit('click')
           this.title = "title changed"
-          this.person.age = 16
+          this.person.age = 16  //改变父组件传下来的person值，父组件没有用到person.age，父组件不
         }
       }
     })
@@ -265,6 +275,7 @@
     /**
      * __patch__(#el,vnode)
      * */
+
     new Vue({
       el: '#el',
       template: '#Test-Template',
@@ -283,11 +294,15 @@
         // }, 0)
       },
       methods: {
+        onTestCompsClicked() {
+
+        },
         onClick() {
           alert('你点我了')
         },
         toggle() {
-          this.isShow = !this.isShow
+          // this.isShow = !this.isShow
+          this.$set(this.person, 'gender', 'man')
         }
       }
     })

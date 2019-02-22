@@ -41,7 +41,7 @@ export function createFnInvoker(fns: Function | Array<Function>): Function {
   invoker.fns = fns
   return invoker
 }
-
+// updateListeners(listeners, oldListeners || {}, add, remove, vm)
 export function updateListeners(
   on: Object,
   oldOn: Object,
@@ -67,6 +67,7 @@ export function updateListeners(
       )
     } else if (isUndef(old)) {
       if (isUndef(cur.fns)) {
+        //如果cur是函数，那么生成一个新函数，这个函数的fns属性指向cur，执行这个新函数就是执行cur
         cur = on[name] = createFnInvoker(cur)
       }
       //绑定回调函数
@@ -77,6 +78,7 @@ export function updateListeners(
       on[name] = old
     }
   }
+  //移除不需要的事件
   for (name in oldOn) {
     if (isUndef(on[name])) {
       event = normalizeEvent(name)

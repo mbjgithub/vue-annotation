@@ -6,7 +6,7 @@ import { lifecycleMixin } from './lifecycle'
 import { warn } from '../util/index'
 
 /**
- * Vue构造函数里面也是只有个_init，所以Vue.extend里面也只是单纯调用_init
+ * Vue构造函数里面也是只有个_init，所以Vue.extend所生成的组件构造函数里面也只是单纯调用_init
  * @param {组件选项} options
  */
 function Vue(options) {

@@ -40,7 +40,7 @@ export function initExtend(Vue: GlobalAPI) {
     Sub.prototype = Object.create(Super.prototype)
     Sub.prototype.constructor = Sub
     Sub.cid = cid++
-    //当前options与全局options合并
+    //当前options与全局options合并,并进行options的标准化
     Sub.options = mergeOptions(
       Super.options,
       extendOptions

@@ -112,6 +112,7 @@ function copyAugment(target: Object, src: Object, keys: Array<string>) {
  */
 export function observe(value: any, asRootData: ?boolean): Observer | void {
   //常量绕过
+  console.log('333333')
   if (!isObject(value) || value instanceof VNode) {
     return
   }
@@ -161,7 +162,7 @@ export function defineReactive(
     val = obj[key]
   }
 
-  let childOb = !shallow && observe(val)
+  let childOb = !shallow && observe(val)   //深度变动观察
   Object.defineProperty(obj, key, {
     enumerable: true,
     configurable: true,
@@ -169,13 +170,14 @@ export function defineReactive(
       const value = getter ? getter.call(obj) : val
       // 执行render的时候会导致属性的get函数被调用
       if (Dep.target) {
-        // 将当前组件的某个state所对应的dep跟组件对应的watcher绑定，这个watcher包含当前组件对应的所有dep
+        // 将当前组件渲染时用到的某个state所对应的dep跟组件对应的watcher绑定，如果没有用到，不会绑定，这个watcher包含当前组件对应
+        // 的所有dep,其他组件如果也用到这个state，那么这个组件对应的watcher也会被加入到这个dep里面
         //在Dep.target静态属性里面添加dep实例，也就是在watcher里面添加当前属性对应的dep实例，并把watcher加到dep的subs里面
         dep.depend()
-        if (childOb) {  //TODO
-          childOb.dep.depend()
+        if (childOb) {
+          childOb.dep.depend()  //如果属性值是对象，那么这个对象的dep也跟组件对应的watcher绑定
           if (Array.isArray(value)) {
-            dependArray(value)
+            dependArray(value)          //收集属性是数组的依赖
           }
         }
       }
@@ -246,7 +248,7 @@ export function set(target: Array<any> | Object, key: any, val: any): any {
     return val
   }
   defineReactive(ob.value, key, val)        //其实就是这个observer观察的对象
-  ob.dep.notify()
+  ob.dep.notify()   //更新UI
   return val
 }
 

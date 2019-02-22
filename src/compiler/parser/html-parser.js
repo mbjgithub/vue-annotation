@@ -13,6 +13,11 @@ import { makeMap, no } from 'shared/util'
 import { isNonPhrasingTag } from 'web/compiler/util'
 
 // Regular Expressions for parsing tags and attributes
+// matched[1]匹配的属性名
+// matched[2]匹配的=
+// matched[3]匹配的"包裹的属性值
+// matched[4]匹配的'包裹的属性值
+// matched[5]匹配的没有被'"包裹的属性值
 const attribute = /^\s*([^\s"'<>\/=]+)(?:\s*(=)\s*(?:"([^"]*)"+|'([^']*)'+|([^\s"'=<>`]+)))?/
 // could use https://www.w3.org/TR/1999/REC-xml-names-19990114/#NT-QName
 // but for Vue templates we can enforce a simple charset
@@ -45,12 +50,17 @@ const encodedAttrWithNewLines = /&(?:lt|gt|quot|amp|#10|#9);/g
 const isIgnoreNewlineTag = makeMap('pre,textarea', true)
 const shouldIgnoreFirstNewline = (tag, html) => tag && isIgnoreNewlineTag(tag) && html[0] === '\n'
 
-function decodeAttr (value, shouldDecodeNewlines) {
+/**
+ * 解码
+ * @param {*} value
+ * @param {*} shouldDecodeNewlines
+ */
+function decodeAttr(value, shouldDecodeNewlines) {
   const re = shouldDecodeNewlines ? encodedAttrWithNewLines : encodedAttr
   return value.replace(re, match => decodingMap[match])
 }
 
-export function parseHTML (html, options) {
+export function parseHTML(html, options) {
   const stack = []
   const expectHTML = options.expectHTML
   const isUnaryTag = options.isUnaryTag || no
@@ -62,6 +72,7 @@ export function parseHTML (html, options) {
     // Make sure we're not in a plaintext content element like script/style
     if (!lastTag || !isPlainTextElement(lastTag)) {
       let textEnd = html.indexOf('<')
+      // 处理标签
       if (textEnd === 0) {
         // Comment:
         if (comment.test(html)) {
@@ -103,19 +114,29 @@ export function parseHTML (html, options) {
         }
 
         // Start tag:
+        // 解析出<div class="box" style="width:100px">
+        // {
+        //   tag: 'div',
+        //   attrs: [
+        //       ["class='box'", "class", "=", "box"],
+        //       ["style='width:100px'", "style", "=", "width:100px"]
+        //     ]
+        // }
         const startTagMatch = parseStartTag()
         if (startTagMatch) {
           handleStartTag(startTagMatch)
+          // 忽略pre,textarea标签的第一行换行符
           if (shouldIgnoreFirstNewline(lastTag, html)) {
             advance(1)
           }
           continue
         }
       }
-
+      // 处理纯文本
       let text, rest, next
       if (textEnd >= 0) {
-        rest = html.slice(textEnd)
+        rest = html.slice(textEnd)   // 获取文本
+        // 如果文本中也有<标签
         while (
           !endTag.test(rest) &&
           !startTagOpen.test(rest) &&
@@ -123,6 +144,7 @@ export function parseHTML (html, options) {
           !conditionalComment.test(rest)
         ) {
           // < in plain text, be forgiving and treat it as text
+          // 寻找testEnd的位置
           next = rest.indexOf('<', 1)
           if (next < 0) break
           textEnd += next
@@ -138,7 +160,7 @@ export function parseHTML (html, options) {
       }
 
       if (options.chars && text) {
-        options.chars(text)
+        options.chars(text)   // 调用传入的chars，处理字符，看到这里
       }
     } else {
       let endTagLength = 0
@@ -175,36 +197,55 @@ export function parseHTML (html, options) {
 
   // Clean up any remaining tags
   parseEndTag()
-
-  function advance (n) {
+  /**
+   * 截取剩余未被解析的模板
+   * 人话就是：去掉已经匹配到的字符
+   * @param {*} n
+   */
+  function advance(n) {
     index += n
     html = html.substring(n)
   }
 
-  function parseStartTag () {
-    const start = html.match(startTagOpen)
+  function parseStartTag() {
+    const start = html.match(startTagOpen)   //获取到 <div
     if (start) {
       const match = {
         tagName: start[1],
         attrs: [],
         start: index
       }
-      advance(start[0].length)
+      advance(start[0].length)   //去掉已经匹配到的字符
       let end, attr
+      // html.match(startTagClose)  匹配 >
+      // matched[1]匹配的属性名
+      // matched[2]匹配的=
+      // matched[3]匹配的"包裹的属性值
+      // matched[4]匹配的'包裹的属性值
+      // matched[5]匹配的没有被'"包裹的属性值
       while (!(end = html.match(startTagClose)) && (attr = html.match(attribute))) {
-        advance(attr[0].length)
+        advance(attr[0].length)  //去掉已经匹配到的字符
         match.attrs.push(attr)
       }
       if (end) {
-        match.unarySlash = end[1]
+        match.unarySlash = end[1]  //是否是可以自闭合的标签
         advance(end[0].length)
         match.end = index
         return match
       }
     }
   }
-
-  function handleStartTag (match) {
+  /**
+   {
+      tag: 'div',
+      attrs: [
+        ["class='box'", "class", "=", "box"],
+        ["style='width:100px'", "style", "=", "width:100px"]
+      ]
+    }
+   * @param {*} match
+   */
+  function handleStartTag(match) {
     const tagName = match.tagName
     const unarySlash = match.unarySlash
 
@@ -223,27 +264,34 @@ export function parseHTML (html, options) {
     const attrs = new Array(l)
     for (let i = 0; i < l; i++) {
       const args = match.attrs[i]
+      // matched[1]匹配的属性名
+      // matched[2]匹配的=
+      // matched[3]匹配的"包裹的属性值
+      // matched[4]匹配的'包裹的属性值
+      // matched[5]匹配的没有被'"包裹的属性值
       const value = args[3] || args[4] || args[5] || ''
       const shouldDecodeNewlines = tagName === 'a' && args[1] === 'href'
         ? options.shouldDecodeNewlinesForHref
         : options.shouldDecodeNewlines
       attrs[i] = {
         name: args[1],
-        value: decodeAttr(value, shouldDecodeNewlines)
+        value: decodeAttr(value, shouldDecodeNewlines)   //属性值解码,&lt;解码成<
       }
     }
-
+    //非自闭合标签
     if (!unary) {
       stack.push({ tag: tagName, lowerCasedTag: tagName.toLowerCase(), attrs: attrs })
       lastTag = tagName
     }
 
     if (options.start) {
+      // 用解析出来的attrs，生成特定平台需要的属性，并挂载到el上，比如：用解析出来的v-for，
+      // 得到el.for={for:items,alis:item,iterator1:index,iterator2:index}
       options.start(tagName, attrs, unary, match.start, match.end)
     }
   }
 
-  function parseEndTag (tagName, start, end) {
+  function parseEndTag(tagName, start, end) {
     let pos, lowerCasedTagName
     if (start == null) start = index
     if (end == null) end = index

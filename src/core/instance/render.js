@@ -19,8 +19,9 @@ export function initRender(vm: Component) {
   vm._vnode = null // the root of the child tree
   vm._staticTrees = null // v-once cached trees
   const options = vm.$options
+  //当前组件对应的vnode节点，<TestComps></TestComps>
   const parentVnode = vm.$vnode = options._parentVnode // the placeholder node in parent tree
-  const renderContext = parentVnode && parentVnode.context
+  const renderContext = parentVnode && parentVnode.context //当前组件所在父组件实例
   vm.$slots = resolveSlots(options._renderChildren, renderContext)
   vm.$scopedSlots = emptyObject
   // bind the createElement fn to this instance
@@ -47,6 +48,7 @@ export function initRender(vm: Component) {
     }, true)
   } else {
     //为什么要在当前组件实例上定义这些响应式属性并且值是父组件的
+    //浅watch
     defineReactive(vm, '$attrs', parentData && parentData.attrs || emptyObject, null, true)
     defineReactive(vm, '$listeners', options._parentListeners || emptyObject, null, true)
   }

@@ -16,8 +16,12 @@ type TextParseResult = {
   expression: string,
   tokens: Array<string | { '@binding': string }>
 }
-
-export function parseText (
+/**
+ * 解析文本
+ * @param {*} text
+ * @param {*} delimiters
+ */
+export function parseText(
   text: string,
   delimiters?: [string, string]
 ): TextParseResult | void {

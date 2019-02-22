@@ -15,7 +15,13 @@ let uid = 0
 export function initMixin(Vue: Class<Component>) {
   /**
    * 初始化函数，Vue构造函数里面就是调用这个方法
-   * options:初始传入的组件选项
+   * options:new Vue时候传入的options或者自定义组件由Vue传入的对象
+   * {
+   *  parent: Vue {_uid: 0, _isVue: true, $options: {…}, _renderProxy: Proxy, _self: Vue, …},
+   *  _isComponent: true,
+   *  _parentVnode: VNode {tag: "vue-component-1-TestComp", data: {…}, children: undefined, text: undefined, elm: undefined, …},
+   *  __proto__: Object
+   * }
    */
   Vue.prototype._init = function (options?: Object) {
     const vm: Component = this
@@ -39,6 +45,8 @@ export function initMixin(Vue: Class<Component>) {
       // optimize internal component instantiation
       // since dynamic options merging is pretty slow, and none of the
       // internal component options needs special treatment.
+      // 将Vue传入的options与自定义组件时传入的options合并，不过这里是手动合并，优化extend合并慢的缺点
+      // 得到vm.$options
       initInternalComponent(vm, options)
     } else {
       vm.$options = mergeOptions(
@@ -58,10 +66,10 @@ export function initMixin(Vue: Class<Component>) {
     // expose real self
     vm._self = vm
     initLifecycle(vm)          //在实例上挂在很多初始属性，并且链上父组件和子组件的关系，如vm.$parent，vm.$children
-    initEvents(vm)             //这里需要看下updateListener，为什么要update parent listener
+    initEvents(vm)             //实现自定义组件的自定义事件监听，<TestComps @click="onClick"></TestComps>，实现原理其实就是在创建TestComps实例的时候，在实例上监听click事件
     initRender(vm)             //创建当前上下文的createElement
     callHook(vm, 'beforeCreate')       //属性不具备响应式能力
-    initInjections(vm) // resolve injections before data/props
+    initInjections(vm) // resolve injections before data/props，provide 和 inject 主要为高阶插件/组件库提供用例。并不推荐直接用于应用程序代码中。
     initState(vm)      //初始化状态，props，methods，computed，data，watch，并加上Observe，做一些合法性校验
     initProvide(vm) // resolve provide after data/props
     callHook(vm, 'created')    //所以调用created回调的时候属性已经是响应式的了
@@ -80,12 +88,20 @@ export function initMixin(Vue: Class<Component>) {
 }
 
 export function initInternalComponent(vm: Component, options: InternalComponentOptions) {
-  const opts = vm.$options = Object.create(vm.constructor.options)
+  const opts = vm.$options = Object.create(vm.constructor.options)   // opts是自定义组件传入的options
   // doing this because it's faster than dynamic enumeration.
-  const parentVnode = options._parentVnode
-  opts.parent = options.parent
+  const parentVnode = options._parentVnode  //自定义组件vnode
+  opts.parent = options.parent   //自定义组件所在的父组件实例
   opts._parentVnode = parentVnode
 
+  // componentOptions
+  // {
+  //   Ctor: ƒ VueComponent(options)
+  //   children: undefined
+  //   listeners: undefined
+  //   propsData: {person: {…}, password: "123456", username: "aliarmo"}
+  //   tag: "TestComp"
+  // }
   const vnodeComponentOptions = parentVnode.componentOptions
   opts.propsData = vnodeComponentOptions.propsData
   opts._parentListeners = vnodeComponentOptions.listeners
@@ -99,11 +115,11 @@ export function initInternalComponent(vm: Component, options: InternalComponentO
 }
 
 export function resolveConstructorOptions(Ctor: Class<Component>) {
-  let options = Ctor.options
-  if (Ctor.super) {
+  let options = Ctor.options  //定义组件时候传入的options，自定义组件都有一个单独的继承自Vue的构造函数
+  if (Ctor.super) {  //父类
     const superOptions = resolveConstructorOptions(Ctor.super)
     const cachedSuperOptions = Ctor.superOptions
-    if (superOptions !== cachedSuperOptions) {
+    if (superOptions !== cachedSuperOptions) {   //啥case情况下会不相等？todo
       // super option changed,
       // need to resolve new options.
       Ctor.superOptions = superOptions

@@ -33,7 +33,13 @@ import {
 } from 'weex/runtime/recycle-list/render-component-template'
 
 // inline hooks to be invoked on component VNodes during patch
+// 组件vnode的hook
 const componentVNodeHooks = {
+  /**
+   * 创建component实例
+   * @param {*} vnode
+   * @param {*} hydrating
+   */
   init(vnode: VNodeWithData, hydrating: boolean): ?boolean {
     if (
       vnode.componentInstance &&
@@ -47,7 +53,7 @@ const componentVNodeHooks = {
       //指定当前组件对应的构造函数,获取组件实例,vnode.componentOptions.Ctor
       const child = vnode.componentInstance = createComponentInstanceForVnode(
         vnode,                //组件的vnode
-        activeInstance
+        activeInstance        //当前活动的组件实例
       )
       // 挂载
       child.$mount(hydrating ? vnode.elm : undefined, hydrating)
@@ -70,7 +76,10 @@ const componentVNodeHooks = {
       options.children // new children，组件的slot
     )
   },
-
+  /**
+   * vnode被插入的时候
+   * @param {*} vnode
+   */
   insert(vnode: MountedComponentVNode) {
     const { context, componentInstance } = vnode
     if (!componentInstance._isMounted) {
@@ -104,7 +113,14 @@ const componentVNodeHooks = {
 }
 
 const hooksToMerge = Object.keys(componentVNodeHooks)
-
+/**
+ * 执行render函数的时候生成自定义组件vnode
+ * @param {*} Ctor
+ * @param {*} data
+ * @param {*} context
+ * @param {*} children
+ * @param {*} tag
+ */
 export function createComponent(
   Ctor: Class<Component> | Function | Object | void,
   data: ?VNodeData,
@@ -211,7 +227,11 @@ export function createComponent(
 
   return vnode
 }
-
+/**
+ * 用vnode创建组件实例
+ * @param {*} vnode
+ * @param {*} parent
+ */
 export function createComponentInstanceForVnode(
   vnode: any, // we know it's MountedComponentVNode but flow doesn't
   parent: any, // activeInstance in lifecycle state
@@ -227,7 +247,7 @@ export function createComponentInstanceForVnode(
     options.render = inlineTemplate.render
     options.staticRenderFns = inlineTemplate.staticRenderFns
   }
-  return new vnode.componentOptions.Ctor(options)
+  return new vnode.componentOptions.Ctor(options)   //调用组件构造函数
 }
 
 function installComponentHooks(data: VNodeData) {

@@ -437,7 +437,7 @@ export function mergeOptions(
  * to assets defined in its ancestor chain.
  * 子组件需要获取父组件中定义的filters，directives，components
  */
-// (vm.$options, 'directives', dir.name, true)
+// (vm.$options, '', dir.name, true)
 export function resolveAsset(
   options: Object,
   type: string,

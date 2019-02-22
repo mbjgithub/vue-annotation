@@ -8,6 +8,9 @@
  *   <input v-if="type === 'checkbox'" type="checkbox" v-model="data[type]">
  *   <input v-else-if="type === 'radio'" type="radio" v-model="data[type]">
  *   <input v-else :type="type" v-model="data[type]">
+ *
+ * <input type="input" v-model="person.name">
+ * <input type="input" @input="val=>person.name=val" :value="person.name">
  */
 
 import {
@@ -23,7 +26,7 @@ import {
   createASTElement
 } from 'compiler/parser/index'
 
-function preTransformNode (el: ASTElement, options: CompilerOptions) {
+function preTransformNode(el: ASTElement, options: CompilerOptions) {
   if (el.tag === 'input') {
     const map = el.attrsMap
     if (!map['v-model']) {
@@ -85,7 +88,7 @@ function preTransformNode (el: ASTElement, options: CompilerOptions) {
   }
 }
 
-function cloneASTElement (el) {
+function cloneASTElement(el) {
   return createASTElement(el.tag, el.attrsList.slice(), el.parent)
 }
 

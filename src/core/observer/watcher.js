@@ -23,6 +23,10 @@ let uid = 0
  * and fires callback when the expression value changes.
  * This is used for both the $watch() api and directives.
  * 观察者，用户观察目标对象的变动，以通知其他的对象
+ * watcher是监听者，里面定义了对变动的响应，那么watcher如何监听组件state的变动呢，
+ * 是通过dep来实现监听的。首先在初始化的时候，递归重新定义每个state属性的get和set，每个属性对应一个dep对象，
+ * 当render的时候，会调用属性的get，get里面将这个属性所对应的dep与watcher绑定，其他的组件用到了该属性也会导致
+ * 属性的get调用，属性所对应dep与该组件绑定，当变动发生时，dep通知到与之绑定的watcher进行变动响应
  */
 export default class Watcher {
   vm: Component;
@@ -69,7 +73,7 @@ export default class Watcher {
     if (isRenderWatcher) {
       vm._watcher = this
     }
-    vm._watchers.push(this)   //当前vm所拥有的watcher集合
+    vm._watchers.push(this)   //当前vm所拥有的watcher集合，TODO，为什么一个vm会有多个watcher
     // options
     if (options) {
       this.deep = !!options.deep
@@ -85,7 +89,7 @@ export default class Watcher {
     this.active = true
     this.dirty = this.lazy // for lazy watchers
     this.deps = []
-    this.newDeps = []
+    this.newDeps = []   //watcher对应组件的state所对应的所有dep
     this.depIds = new Set()     //不可重复
     this.newDepIds = new Set()  //不可重复
     this.expression = process.env.NODE_ENV !== 'production'
@@ -150,6 +154,8 @@ export default class Watcher {
 
   /**
    * Add a dependency to this directive.
+   * 给组件对应的watcher添加属性对应的dep，进行dep与watcher绑定
+   * 所有的dep都被添加到这个这个watcher的newDeps
    */
   addDep(dep: Dep) {
     const id = dep.id
@@ -263,7 +269,7 @@ export default class Watcher {
       }
       let i = this.deps.length
       while (i--) {
-        this.deps[i].removeSub(this)
+        this.deps[i].removeSub(this)   //不在通知当前组件的watcher更新，因为组件都被销毁了
       }
       this.active = false
     }

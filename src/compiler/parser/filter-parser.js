@@ -1,8 +1,13 @@
 /* @flow */
 
 const validDivisionCharRE = /[\w).+\-_$\]]/
-
-export function parseFilters (exp: string): string {
+/**
+ * 解析过滤器
+ * :class="classStr | filter"              _f("filter")(classStr)
+ * :class="classStr | filter('hahaha')"    _f("filter")(classStr,'hahaha')
+ * @param {*} exp
+ */
+export function parseFilters(exp: string): string {
   let inSingle = false
   let inDouble = false
   let inTemplateString = false
@@ -70,7 +75,7 @@ export function parseFilters (exp: string): string {
     pushFilter()
   }
 
-  function pushFilter () {
+  function pushFilter() {
     (filters || (filters = [])).push(exp.slice(lastFilterIndex, i).trim())
     lastFilterIndex = i + 1
   }
@@ -84,7 +89,7 @@ export function parseFilters (exp: string): string {
   return expression
 }
 
-function wrapFilter (exp: string, filter: string): string {
+function wrapFilter(exp: string, filter: string): string {
   const i = filter.indexOf('(')
   if (i < 0) {
     // _f: resolveFilter
