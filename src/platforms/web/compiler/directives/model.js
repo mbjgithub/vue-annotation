@@ -1,5 +1,9 @@
 /* @flow */
-
+/**
+ * v-model
+ * state跟特定元素的属性绑定，更新state，则更新UI
+ * 给元素添加事件，事件回调更新state
+ */
 import config from 'core/config'
 import { addHandler, addProp, getBindingAttr } from 'compiler/helpers'
 import { genComponentModel, genAssignmentCode } from 'compiler/directives/model'
@@ -10,16 +14,16 @@ let warn
 // so we used some reserved tokens during compile.
 export const RANGE_TOKEN = '__r'
 export const CHECKBOX_RADIO_TOKEN = '__c'
-
-export default function model (
+// v-model.trim="person.name"
+export default function model(
   el: ASTElement,
   dir: ASTDirective,
   _warn: Function
 ): ?boolean {
   warn = _warn
-  const value = dir.value
-  const modifiers = dir.modifiers
-  const tag = el.tag
+  const value = dir.value  // person.name
+  const modifiers = dir.modifiers  // {trim:true}
+  const tag = el.tag   // v-model所在元素
   const type = el.attrsMap.type
 
   if (process.env.NODE_ENV !== 'production') {
@@ -32,13 +36,14 @@ export default function model (
       )
     }
   }
-
+  // <component v-model="person.name" :is="TestComps"></component>
+  // 由平台来决定如何处理component组件的v-model
   if (el.component) {
-    genComponentModel(el, value, modifiers)
+    genComponentModel(el, value, modifiers)           // 单独在el上挂载了一个model的配置，包含value和callback
     // component v-model doesn't need extra runtime
     return false
   } else if (tag === 'select') {
-    genSelect(el, value, modifiers)
+    genSelect(el, value, modifiers)   // 给select添加了change事件，回调所做的事情就是将被选中的options设置到绑定的state上
   } else if (tag === 'input' && type === 'checkbox') {
     genCheckboxModel(el, value, modifiers)
   } else if (tag === 'input' && type === 'radio') {
@@ -46,7 +51,7 @@ export default function model (
   } else if (tag === 'input' || tag === 'textarea') {
     genDefaultModel(el, value, modifiers)
   } else if (!config.isReservedTag(tag)) {
-    genComponentModel(el, value, modifiers)
+    genComponentModel(el, value, modifiers)  // 自定义组件上使用v-model，<TestComps v-model="person.name"></TestComps>
     // component v-model doesn't need extra runtime
     return false
   } else if (process.env.NODE_ENV !== 'production') {
@@ -62,7 +67,7 @@ export default function model (
   return true
 }
 
-function genCheckboxModel (
+function genCheckboxModel(
   el: ASTElement,
   value: string,
   modifiers: ?ASTModifiers
@@ -81,31 +86,33 @@ function genCheckboxModel (
   )
   addHandler(el, 'change',
     `var $$a=${value},` +
-        '$$el=$event.target,' +
-        `$$c=$$el.checked?(${trueValueBinding}):(${falseValueBinding});` +
+    '$$el=$event.target,' +
+    `$$c=$$el.checked?(${trueValueBinding}):(${falseValueBinding});` +
     'if(Array.isArray($$a)){' +
-      `var $$v=${number ? '_n(' + valueBinding + ')' : valueBinding},` +
-          '$$i=_i($$a,$$v);' +
-      `if($$el.checked){$$i<0&&(${genAssignmentCode(value, '$$a.concat([$$v])')})}` +
-      `else{$$i>-1&&(${genAssignmentCode(value, '$$a.slice(0,$$i).concat($$a.slice($$i+1))')})}` +
+    `var $$v=${number ? '_n(' + valueBinding + ')' : valueBinding},` +
+    '$$i=_i($$a,$$v);' +
+    `if($$el.checked){$$i<0&&(${genAssignmentCode(value, '$$a.concat([$$v])')})}` +
+    `else{$$i>-1&&(${genAssignmentCode(value, '$$a.slice(0,$$i).concat($$a.slice($$i+1))')})}` +
     `}else{${genAssignmentCode(value, '$$c')}}`,
     null, true
   )
 }
 
-function genRadioModel (
+function genRadioModel(
   el: ASTElement,
   value: string,
   modifiers: ?ASTModifiers
 ) {
   const number = modifiers && modifiers.number
-  let valueBinding = getBindingAttr(el, 'value') || 'null'
+  let valueBinding = getBindingAttr(el, 'value') || 'null'     // 这里getBindingAttr的值不明白，还有:value="username"？，TODO
   valueBinding = number ? `_n(${valueBinding})` : valueBinding
   addProp(el, 'checked', `_q(${value},${valueBinding})`)
   addHandler(el, 'change', genAssignmentCode(value, valueBinding), null, true)
 }
-
-function genSelect (
+/**
+ * 没有跟select的value绑定？TODO
+ */
+function genSelect(
   el: ASTElement,
   value: string,
   modifiers: ?ASTModifiers
@@ -122,7 +129,7 @@ function genSelect (
   addHandler(el, 'change', code, null, true)
 }
 
-function genDefaultModel (
+function genDefaultModel(
   el: ASTElement,
   value: string,
   modifiers: ?ASTModifiers

@@ -13,7 +13,9 @@ export const createCompiler = createCompilerCreator(function baseCompile(
   template: string,
   options: CompilerOptions
 ): CompiledResult {
+  // 将模板转化为ast树
   const ast = parse(template.trim(), options)
+  // 默认优化ast树，为后面生成staticRender做准备
   if (options.optimize !== false) {
     optimize(ast, options)
   }

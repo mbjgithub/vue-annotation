@@ -17,25 +17,33 @@ const genStaticKeysCached = cached(genStaticKeys)
  * 1. Hoist them into constants, so that we no longer need to
  *    create fresh nodes for them on each re-render;
  * 2. Completely skip them in the patching process.
+ * 生成staticRoot，为后面生成staticRender做准备
+ * 如果孩子节点有非static的node，那么parent一定不是static
  */
-export function optimize (root: ?ASTElement, options: CompilerOptions) {
+export function optimize(root: ?ASTElement, options: CompilerOptions) {
   if (!root) return
   isStaticKey = genStaticKeysCached(options.staticKeys || '')
   isPlatformReservedTag = options.isReservedTag || no
   // first pass: mark all non-static nodes.
+  // 首先遍历ast，对每个ast node，标记它是静态还是非静态节点
   markStatic(root)
   // second pass: mark static roots.
+  // 其次，找到所有的staticRoot
   markStaticRoots(root, false)
 }
 
-function genStaticKeys (keys: string): Function {
+/**
+ * 生成静态key的map
+ * @param {*} keys
+ */
+function genStaticKeys(keys: string): Function {
   return makeMap(
     'type,tag,attrsList,attrsMap,plain,parent,children,attrs' +
     (keys ? ',' + keys : '')
   )
 }
 
-function markStatic (node: ASTNode) {
+function markStatic(node: ASTNode) {
   node.static = isStatic(node)
   if (node.type === 1) {
     // do not make component slot content static. this avoids
@@ -51,7 +59,7 @@ function markStatic (node: ASTNode) {
     for (let i = 0, l = node.children.length; i < l; i++) {
       const child = node.children[i]
       markStatic(child)
-      if (!child.static) {
+      if (!child.static) {  // 还在节点不是static node，则父节点也不是
         node.static = false
       }
     }
@@ -67,7 +75,7 @@ function markStatic (node: ASTNode) {
   }
 }
 
-function markStaticRoots (node: ASTNode, isInFor: boolean) {
+function markStaticRoots(node: ASTNode, isInFor: boolean) {
   if (node.type === 1) {
     if (node.static || node.once) {
       node.staticInFor = isInFor
@@ -79,7 +87,7 @@ function markStaticRoots (node: ASTNode, isInFor: boolean) {
       node.children.length === 1 &&
       node.children[0].type === 3
     )) {
-      node.staticRoot = true
+      node.staticRoot = true   //找到staticRoot就没有必要找下去了
       return
     } else {
       node.staticRoot = false
@@ -97,11 +105,11 @@ function markStaticRoots (node: ASTNode, isInFor: boolean) {
   }
 }
 
-function isStatic (node: ASTNode): boolean {
-  if (node.type === 2) { // expression
+function isStatic(node: ASTNode): boolean {
+  if (node.type === 2) { // expression，含有插值的文本
     return false
   }
-  if (node.type === 3) { // text
+  if (node.type === 3) { // text，纯文本
     return true
   }
   return !!(node.pre || (
@@ -114,7 +122,7 @@ function isStatic (node: ASTNode): boolean {
   ))
 }
 
-function isDirectChildOfTemplateFor (node: ASTElement): boolean {
+function isDirectChildOfTemplateFor(node: ASTElement): boolean {
   while (node.parent) {
     node = node.parent
     if (node.tag !== 'template') {

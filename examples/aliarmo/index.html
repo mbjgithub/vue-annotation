@@ -63,10 +63,13 @@
       </div>
     </script>
   <script type="text/x-template" id="TestComp-Template">
-      <div class="TestComp">
+      <div class="TestComp" v-if="isShow">
         <p class="TestComp-P" @click="onClick">{{username}}:{{password}}</p>
         <p>title：{{title}}</p>
         <p>person.age：{{person.age}}</p>
+      </div>
+      <div v-else>
+        hahhaha
       </div>
     </script>
 
@@ -115,19 +118,56 @@
         context:{/*里面有很多东西*/}
       }
      -->
+    <!-- 模板生成的render函数
+      模板
       <div>
-        <div class="Test" :class="username" v-show="isShow">
+        <span>用户名</span>
+        <input v-model="person.name" type="text">
+      </div>
+
+      渲染函数
+      function(){
+        with(this){
+          return _c('div',[_c('span',[_v('用户名')]),_v(''),_c('input',{
+            attrs:{
+              type:'text'
+            },
+            directives:[{
+              name:'model',
+              rawName:'v-model',
+              value:(person.name),
+              expression:'person.name'
+            }],
+            domProps:{
+              value:(person.name)
+            },
+            on:{
+              input:function($e){
+                // 如果正在输入，比如中文输入法
+                if($e.target.composing) return
+                $set(person,'name',$e.target.value)
+              }
+            }
+          })])
+        }
+      }
+    -->
+      <div>
+        <!-- <div class="Test" :class="username" v-show="isShow">
           {{username}}:{{password}}
         </div>
         <p>age:{{person.age}}</p>
-        <p>gender:{{person.gender}}</p>
+        <p>gender:{{person.gender}}</p> -->
         <!-- 自定义组件的vnode上有componentInstance -->
-        <TestComp test="hahhaha"
+        <!-- <TestComp test="hahhaha"
                   @click="onTestCompsClicked"
                   :username="username"
                   :password="password"
-                  :person="person"></TestComp>
-        <button @click="toggle">切换</button>
+                  :person="person"></TestComp> -->
+        <!-- <SimpleComps ></SimpleComps> -->
+        <button @click="toggle('啦啦啦啦啦')">切换</button>
+          <span>用户名</span>
+          <input v-model="person.name" type="text">
       </div>
     </script>
 
@@ -254,7 +294,8 @@
       template: '#TestComp-Template',    //获取模板，被编译成render和renderStatic函数
       data() {
         return {
-          title: '用户信息'
+          title: '用户信息',
+          isShow: false
         }
       },
       methods: {

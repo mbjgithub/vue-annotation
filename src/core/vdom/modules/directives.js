@@ -1,31 +1,28 @@
 /* @flow */
-/**
- * 为所有平台定义指令操作，负责在vnode各个生命周期调用定义指令时提供的钩子函数
- */
+
 import { emptyNode } from 'core/vdom/patch'
 import { resolveAsset, handleError } from 'core/util/index'
 import { mergeVNodeHook } from 'core/vdom/helpers/index'
 
 export default {
-  create: update
-  update: update
-  destroy: function unbindodeWithData) {
-  updateptyNode)
-}
+  create: updateDirectives,
+  update: updateDirectives,
+  destroy: function unbindDirectives(vnode: VNodeWithData) {
+    updateDirectives(vnode, emptyNode)
+  }
 }
 
-function update VNodeWithData, vnode: VNodeWithData) {
-  if (oldVnode.data.data.) {
+function updateDirectives(oldVnode: VNodeWithData, vnode: VNodeWithData) {
+  if (oldVnode.data.directives || vnode.data.directives) {
     _update(oldVnode, vnode)
   }
 }
 
 function _update(oldVnode, vnode) {
-  const isCreate = oldVnode === emptyNode   //vnode创建时
-  const isDestroy = vnode === emptyNode     //vnode销毁时
-
-  const oldDirs = normalizedata., oldVnode
-  const newDirs = normalizea., vnode.co
+  const isCreate = oldVnode === emptyNode
+  const isDestroy = vnode === emptyNode
+  const oldDirs = normalizeDirectives(oldVnode.data.directives, oldVnode.context)
+  const newDirs = normalizeDirectives(vnode.data.directives, vnode.context)
 
   const dirsWithInsert = []
   const dirsWithPostpatch = []
@@ -43,6 +40,7 @@ function _update(oldVnode, vnode) {
     } else {
       // existing directive, update
       dir.oldValue = oldDir.value
+      dir.oldArg = oldDir.arg
       callHook(dir, 'update', vnode, oldVnode)
       if (dir.def && dir.def.componentUpdated) {
         dirsWithPostpatch.push(dir)
@@ -82,9 +80,9 @@ function _update(oldVnode, vnode) {
 }
 
 const emptyModifiers = Object.create(null)
-//标准化指令
-function normalize
-  dirs: ? Array < VNodeDirective >,
+
+function normalizeDirectives(
+  dirs: ?Array<VNodeDirective>,
   vm: Component
 ): { [key: string]: VNodeDirective } {
   const res = Object.create(null)
@@ -99,8 +97,8 @@ function normalize
       // $flow-disable-line
       dir.modifiers = emptyModifiers
     }
-    res[getRawDirName(dir)] = dir
-    dir.def = resolveAsset(vm.$options, 'e, true)  //获取指定名称的指令定义，可能需要从原型链上获取
+    res[getRawDirName(dir)] = dir   //获取指定名称的指令定义，可能需要从原型链上获取
+    dir.def = resolveAsset(vm.$options, 'directives', dir.name, true)
   }
   // $flow-disable-line
   return res

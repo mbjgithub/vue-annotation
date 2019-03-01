@@ -2,8 +2,9 @@
 
 /**
  * Cross-platform code generation for component v-model
+ *
  */
-export function genComponentModel (
+export function genComponentModel(
   el: ASTElement,
   value: string,
   modifiers: ?ASTModifiers
@@ -21,7 +22,7 @@ export function genComponentModel (
   if (number) {
     valueExpression = `_n(${valueExpression})`
   }
-  const assignment = genAssignmentCode(value, valueExpression)
+  const assignment = genAssignmentCode(value, valueExpression)  // 获取函数体，其实就是解析v-model的expression，然后$set这个值
 
   el.model = {
     value: `(${value})`,
@@ -33,15 +34,15 @@ export function genComponentModel (
 /**
  * Cross-platform codegen helper for generating v-model value assignment code.
  */
-export function genAssignmentCode (
+export function genAssignmentCode(
   value: string,
   assignment: string
 ): string {
   const res = parseModel(value)
   if (res.key === null) {
-    return `${value}=${assignment}`
+    return `${value}=${assignment}`  // this.username="lalalal"
   } else {
-    return `$set(${res.exp}, ${res.key}, ${assignment})`
+    return `$set(${res.exp}, ${res.key}, ${assignment})`  // 有可能设置state对象的属性没有动态绑定过，所以用$set
   }
 }
 
@@ -67,7 +68,7 @@ type ModelParseResult = {
   key: string | null
 }
 
-export function parseModel (val: string): ModelParseResult {
+export function parseModel(val: string): ModelParseResult {
   // Fix https://github.com/vuejs/vue/pull/7730
   // allow v-model="obj.val " (trailing whitespace)
   val = val.trim()
@@ -107,19 +108,19 @@ export function parseModel (val: string): ModelParseResult {
   }
 }
 
-function next (): number {
+function next(): number {
   return str.charCodeAt(++index)
 }
 
-function eof (): boolean {
+function eof(): boolean {
   return index >= len
 }
 
-function isStringStart (chr: number): boolean {
+function isStringStart(chr: number): boolean {
   return chr === 0x22 || chr === 0x27
 }
 
-function parseBracket (chr: number): void {
+function parseBracket(chr: number): void {
   let inBracket = 1
   expressionPos = index
   while (!eof()) {
@@ -137,7 +138,7 @@ function parseBracket (chr: number): void {
   }
 }
 
-function parseString (chr: number): void {
+function parseString(chr: number): void {
   const stringQuote = chr
   while (!eof()) {
     chr = next()

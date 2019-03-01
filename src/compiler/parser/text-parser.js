@@ -17,7 +17,7 @@ type TextParseResult = {
   tokens: Array<string | { '@binding': string }>
 }
 /**
- * 解析文本
+ * 解析文本，
  * @param {*} text
  * @param {*} delimiters
  */
@@ -25,7 +25,7 @@ export function parseText(
   text: string,
   delimiters?: [string, string]
 ): TextParseResult | void {
-  const tagRE = delimiters ? buildRegex(delimiters) : defaultTagRE
+  const tagRE = delimiters ? buildRegex(delimiters) : defaultTagRE  // 默认{{username}}方式插值
   if (!tagRE.test(text)) {
     return
   }
@@ -33,6 +33,7 @@ export function parseText(
   const rawTokens = []
   let lastIndex = tagRE.lastIndex = 0
   let match, index, tokenValue
+  // 一个split不是解决所有问题吗，为什么采用这种循序渐进的方式
   while ((match = tagRE.exec(text))) {
     index = match.index
     // push text token
@@ -51,7 +52,7 @@ export function parseText(
     tokens.push(JSON.stringify(tokenValue))
   }
   return {
-    expression: tokens.join('+'),
+    expression: tokens.join('+'),   // "'你好：'"+"_s(username)"
     tokens: rawTokens
   }
 }

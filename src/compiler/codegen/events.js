@@ -1,6 +1,19 @@
 /* @flow */
 
+/**
+ * 函数表达式
+ * function(){},或者()=>{},或者a=>{}
+ */
 const fnExpRE = /^([\w$_]+|\([^)]*?\))\s*=>|^function\s*\(/
+
+/**
+a.b
+a['b']
+a["b"]
+a[1]
+a[b]
+匹配上述case
+*/
 const simplePathRE = /^[A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*|\['[^']*?']|\["[^"]*?"]|\[\d+]|\[[A-Za-z_$][\w$]*])*$/
 
 // KeyboardEvent.keyCode aliases
@@ -49,7 +62,7 @@ const modifierCode: { [key: string]: string } = {
   right: genGuard(`'button' in $event && $event.button !== 2`)
 }
 
-export function genHandlers (
+export function genHandlers(
   events: ASTElementHandlers,
   isNative: boolean
 ): string {
@@ -62,7 +75,7 @@ export function genHandlers (
 
 // Generate handler code with binding params on Weex
 /* istanbul ignore next */
-function genWeexHandler (params: Array<any>, handlerCode: string) {
+function genWeexHandler(params: Array<any>, handlerCode: string) {
   let innerHandlerCode = handlerCode
   const exps = params.filter(exp => simplePathRE.test(exp) && exp !== '$event')
   const bindings = exps.map(exp => ({ '@binding': exp }))
@@ -77,8 +90,12 @@ function genWeexHandler (params: Array<any>, handlerCode: string) {
     `params:${JSON.stringify(bindings)}\n` +
     '}'
 }
-
-function genHandler (
+/**
+ * 获取事件对应的事件回调函数
+ * @param {*} name
+ * @param {*} handler
+ */
+function genHandler(
   name: string,
   handler: ASTElementHandler | Array<ASTElementHandler>
 ): string {
@@ -90,9 +107,8 @@ function genHandler (
     return `[${handler.map(handler => genHandler(name, handler)).join(',')}]`
   }
 
-  const isMethodPath = simplePathRE.test(handler.value)
-  const isFunctionExpression = fnExpRE.test(handler.value)
-
+  const isMethodPath = simplePathRE.test(handler.value)     // 是方法的路径
+  const isFunctionExpression = fnExpRE.test(handler.value)  // 是函数表达式function(){},()=>{}
   if (!handler.modifiers) {
     if (isMethodPath || isFunctionExpression) {
       return handler.value
@@ -101,26 +117,26 @@ function genHandler (
     if (__WEEX__ && handler.params) {
       return genWeexHandler(handler.params, handler.value)
     }
-    return `function($event){${handler.value}}` // inline statement
+    return `function($event){${handler.value}}` // inline statement 说明handler.value就是函数体
   } else {
     let code = ''
     let genModifierCode = ''
     const keys = []
     for (const key in handler.modifiers) {
       if (modifierCode[key]) {
-        genModifierCode += modifierCode[key]
+        genModifierCode += modifierCode[key]   // 获取修饰符对应动作
         // left/right
         if (keyCodes[key]) {
           keys.push(key)
         }
       } else if (key === 'exact') {
         const modifiers: ASTModifiers = (handler.modifiers: any)
-        genModifierCode += genGuard(
-          ['ctrl', 'shift', 'alt', 'meta']
-            .filter(keyModifier => !modifiers[keyModifier])
-            .map(keyModifier => `$event.${keyModifier}Key`)
-            .join('||')
-        )
+          genModifierCode += genGuard(
+            ['ctrl', 'shift', 'alt', 'meta']
+              .filter(keyModifier => !modifiers[keyModifier])
+              .map(keyModifier => `$event.${keyModifier}Key`)
+              .join('||')
+          )
       } else {
         keys.push(key)
       }
@@ -145,11 +161,11 @@ function genHandler (
   }
 }
 
-function genKeyFilter (keys: Array<string>): string {
+function genKeyFilter(keys: Array<string>): string {
   return `if(!('button' in $event)&&${keys.map(genFilterCode).join('&&')})return null;`
 }
 
-function genFilterCode (key: string): string {
+function genFilterCode(key: string): string {
   const keyVal = parseInt(key, 10)
   if (keyVal) {
     return `$event.keyCode!==${keyVal}`

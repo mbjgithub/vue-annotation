@@ -16,6 +16,7 @@ export function pluckModuleFunction<F: Function>(
     : []
 }
 /**
+ * addProp(el, 'innerHTML', `_s(${dir.value})`)
  * 给el挂载props
  * @param {*} el
  * @param {*} name
@@ -41,7 +42,15 @@ export function addRawAttr(el: ASTElement, name: string, value: any) {
   el.attrsMap[name] = value
   el.attrsList.push({ name, value })
 }
-
+/**
+ * 添加解析出来的directives定义
+ * @param {*} el
+ * @param {*} name
+ * @param {*} rawName
+ * @param {*} value
+ * @param {*} arg
+ * @param {*} modifiers
+ */
 export function addDirective(
   el: ASTElement,
   name: string,

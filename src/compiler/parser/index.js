@@ -42,7 +42,14 @@ let platformMustUseProp
 let platformGetTagNamespace
 
 type Attr = { name: string; value: string };
-
+/**
+ * ASTElement中含有的关键属性
+ * directives:[{ name, rawName, value, arg, modifiers }]  除了v-bind，v-on之外，其他的指令如v-model，v-html，或是自定义指令都在这个directives里面
+ * plain：没有属性没有key，则是plain元素
+ * parent：父元素
+ * children：孩子元素，不包含v-elseif，v-else所对应元素
+ * ifConditions里面含有v-if，v-elseif，v-else所对应元素：[<t1 v-if />,<t2 v-elseif />,<t3 v-else />]
+ */
 export function createASTElement(
   tag: string,
   attrs: Array<Attr>,
@@ -60,6 +67,10 @@ export function createASTElement(
 
 /**
  * Convert HTML string to AST.
+ * 将template转化为ast，其中
+ * 解析出部分模板后，<div class="className" style="width:100px"></div> 可定制调用preTransformNode，transformNode
+ * 解析出结束元素的时候调用，</test> 可定制调用postTransformNode
+ * 目的是在ast 元素上挂载符合平台要求的属性
  */
 export function parse(
   template: string,
@@ -71,8 +82,12 @@ export function parse(
   platformMustUseProp = options.mustUseProp || no
   platformGetTagNamespace = options.getTagNamespace || no
 
+  // 执行由平台传入的transformNode，比如web
+  // 处理了class，style，其实就是获取class，然后在el上挂载el.staticClass=class
   transforms = pluckModuleFunction(options.modules, 'transformNode')
+  // 解析出部分模板后，<div class="className" style="width:100px"></div>
   preTransforms = pluckModuleFunction(options.modules, 'preTransformNode')
+  // 解析出结束元素的时候调用，</test>
   postTransforms = pluckModuleFunction(options.modules, 'postTransformNode')
 
   delimiters = options.delimiters
@@ -80,9 +95,9 @@ export function parse(
   const stack = []
   const preserveWhitespace = options.preserveWhitespace !== false
   let root
-  let currentParent
-  let inVPre = false
-  let inPre = false
+  let currentParent    //当前解析出来的ast element
+  let inVPre = false   //是否是v-pre指令
+  let inPre = false    //是否是pre标签
   let warned = false
 
   function warnOnce(msg) {
@@ -115,7 +130,7 @@ export function parse(
     shouldDecodeNewlinesForHref: options.shouldDecodeNewlinesForHref,
     shouldKeepComment: options.comments,
     /**
-     *
+     * 解析出部分模板后调用，<div class="className" style="width:100px">
      * @param {标签名} tag
      * @param {属性列表[{name:'class',value:'className'},{id:'idName'}]} attrs
      * @param {是否为自闭合标签，true表示是} unary
@@ -158,6 +173,7 @@ export function parse(
       // apply pre-transforms
       //解析出部分模板后，<div class="className" style="width:100px">
       // 调用平台传入的preTransform
+      // web平台的v-model有定义，TODO
       for (let i = 0; i < preTransforms.length; i++) {
         element = preTransforms[i](element, options) || element
       }
@@ -184,7 +200,7 @@ export function parse(
         // element-scope stuff
         processElement(element, options)
       }
-
+      // 检测root元素的合法性
       function checkRootConstraints(el) {
         if (process.env.NODE_ENV !== 'production') {
           if (el.tag === 'slot' || el.tag === 'template') {
@@ -208,6 +224,7 @@ export function parse(
         checkRootConstraints(root)
       } else if (!stack.length) {
         // allow root elements with v-if, v-else-if and v-else
+        // 这样的case是模板有多个root element并且root element上有v-if，或者v-else
         if (root.if && (element.elseif || element.else)) {
           checkRootConstraints(element)
           addIfCondition(root, {
@@ -242,7 +259,9 @@ export function parse(
         closeElement(element)
       }
     },
-
+    /**
+     * 解析出</test>后调用
+     */
     end() {
       // remove trailing whitespace
       const element = stack[stack.length - 1]
@@ -255,7 +274,9 @@ export function parse(
       currentParent = stack[stack.length - 1]
       closeElement(element)
     },
-
+    /**
+     * 解析出文本或者插值文本吼调用
+     */
     chars(text: string) {
       if (!currentParent) {
         if (process.env.NODE_ENV !== 'production') {
@@ -280,6 +301,7 @@ export function parse(
         return
       }
       const children = currentParent.children
+      // TODO
       text = inPre || text.trim()
         ? isTextTag(currentParent) ? text : decodeHTMLCached(text)
         // only preserve whitespace if its not right after a starting tag
@@ -287,6 +309,7 @@ export function parse(
       if (text) {
         let res
         if (!inVPre && text !== ' ' && (res = parseText(text, delimiters))) {
+          // 有插值{{username}}
           children.push({
             type: 2,
             expression: res.expression,
@@ -294,6 +317,7 @@ export function parse(
             text
           })
         } else if (text !== ' ' || !children.length || children[children.length - 1].text !== ' ') {
+          // 纯文本
           children.push({
             type: 3,
             text
@@ -347,7 +371,7 @@ export function processElement(element: ASTElement, options: CompilerOptions) {
 
   // determine whether this is a plain element after
   // removing structural attributes
-  // 没有属性没有key，则是文本
+  // 没有属性没有key，则是plain元素
   element.plain = !element.key && !element.attrsList.length
 
   processRef(element)
@@ -475,7 +499,12 @@ function findPrevElement(children: Array<any>): ASTElement | void {
     }
   }
 }
-
+/**
+ *
+ * ifConditions里面含有v-if，v-elseif，v-else所对应元素：[<t1 v-if />,<t2 v-elseif />,<t3 v-else />]
+ * @param {*} el
+ * @param {*} condition
+ */
 export function addIfCondition(el: ASTElement, condition: ASTIfCondition) {
   if (!el.ifConditions) {
     el.ifConditions = []
@@ -610,7 +639,7 @@ function processAttrs(el) {
       } else if (onRE.test(name)) { // v-on
         name = name.replace(onRE, '')
         addHandler(el, name, value, modifiers, false, warn)   //处理事件
-      } else { // normal directives
+      } else { // normal directives，注意到只有normal directives传入的param才有效
         name = name.replace(dirRE, '')      // v-permission.foo.bar:param="value"
         // parse arg
         const argMatch = name.match(argRE)
@@ -625,6 +654,7 @@ function processAttrs(el) {
       }
     } else {
       // literal attribute
+      // 静态属性
       if (process.env.NODE_ENV !== 'production') {
         const res = parseText(value, delimiters)
         if (res) {

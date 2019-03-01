@@ -108,7 +108,8 @@ export function parseHTML(html, options) {
         const endTagMatch = html.match(endTag)
         if (endTagMatch) {
           const curIndex = index
-          advance(endTagMatch[0].length)
+          advance(endTagMatch[0].length) // 匹配的结束标签</test>
+          // endTagMatch[1]标签名
           parseEndTag(endTagMatch[1], curIndex, index)
           continue
         }
@@ -160,7 +161,7 @@ export function parseHTML(html, options) {
       }
 
       if (options.chars && text) {
-        options.chars(text)   // 调用传入的chars，处理字符，看到这里
+        options.chars(text)   // 调用传入的chars，处理字符
       }
     } else {
       let endTagLength = 0
@@ -290,7 +291,12 @@ export function parseHTML(html, options) {
       options.start(tagName, attrs, unary, match.start, match.end)
     }
   }
-
+  /**
+   * 解析结束标签
+   * @param {*} tagName
+   * @param {*} start
+   * @param {*} end
+   */
   function parseEndTag(tagName, start, end) {
     let pos, lowerCasedTagName
     if (start == null) start = index
@@ -321,7 +327,7 @@ export function parseHTML(html, options) {
           )
         }
         if (options.end) {
-          options.end(stack[i].tag, start, end)
+          options.end(stack[i].tag, start, end)  //调用传入的end方法
         }
       }
 
