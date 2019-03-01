@@ -423,8 +423,8 @@ export function processFor(el: ASTElement) {
 type ForParseResult = {
   for: string;         // items名字
   alias: string;       // item
-  iterator1?: string;  // index
-  iterator2?: string;
+  iterator1?: string;  // index或者key
+  iterator2?: string;   // 如果是对象的话，这个值就是遍历的第几个key
 };
 
 export function parseFor(exp: string): ?ForParseResult {

@@ -166,8 +166,12 @@
                   :person="person"></TestComp> -->
         <!-- <SimpleComps ></SimpleComps> -->
         <button @click="toggle('啦啦啦啦啦')">切换</button>
-          <span>用户名</span>
-          <input v-model="person.name" type="text">
+        <!-- <p v-for="name in names">{{name}}</p>
+        <input v-model="person.name" type="text"> -->
+        <div class="staticRoot">
+          <p>static node p</p>
+          <span>static node span</span>
+        </div>
       </div>
     </script>
 
@@ -326,7 +330,8 @@
         isShow: true,
         person: {
           age: 23
-        }
+        },
+        names: ['jack', 'aliarmo', 'taisin']
       },
       created() {
         // setTimeout(() => {

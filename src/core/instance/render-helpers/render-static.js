@@ -9,6 +9,7 @@ export function renderStatic(
 ): VNode | Array<VNode> {
   const cached = this._staticTrees || (this._staticTrees = [])
   let tree = cached[index]
+
   // if has already-rendered static tree and not inside v-for,
   // we can reuse the same tree.
   if (tree && !isInFor) {

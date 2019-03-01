@@ -78,8 +78,10 @@ export function genElement(el: ASTElement, state: CodegenState): string {
     // 生成v-once
     return genOnce(el, state)
   } else if (el.for && !el.forProcessed) {
+    // 处理v-for
     return genFor(el, state)
   } else if (el.if && !el.ifProcessed) {
+    // 处理v-if
     return genIf(el, state)
   } else if (el.tag === 'template' && !el.slotTarget && !state.pre) {
     return genChildren(el, state) || 'void 0'
@@ -132,12 +134,12 @@ function genStatic(el: ASTElement, state: CodegenState): string {
     })`
 }
 
-// v-once
+// v-once 只编译一次，后面state变动不会重新渲染，相当于手动标记static结构
 function genOnce(el: ASTElement, state: CodegenState): string {
   el.onceProcessed = true
   if (el.if && !el.ifProcessed) {
     return genIf(el, state)
-  } else if (el.staticInFor) {
+  } else if (el.staticInFor) {   // 未找到staticInFor case，TODO
     let key = ''
     let parent = el.parent
     while (parent) {
@@ -159,6 +161,8 @@ function genOnce(el: ASTElement, state: CodegenState): string {
   }
 }
 
+// 处理v-if,v-elseif,v-else
+// 加判断条件的createElement
 export function genIf(
   el: any,
   state: CodegenState,
@@ -180,13 +184,15 @@ function genIfConditions(
   }
 
   const condition = conditions.shift()
+  // exp是指令的表达式 v-if="isShow" 这里的exp就是isShow
   if (condition.exp) {
     return `(${condition.exp})?${
       genTernaryExp(condition.block)
       }:${
-      genIfConditions(conditions, state, altGen, altEmpty)
+      genIfConditions(conditions, state, altGen, altEmpty)  // 处理剩余条件,v-elseif，或者v-else
       }`
   } else {
+    // v-else case
     return `${genTernaryExp(condition.block)}`
   }
 
@@ -206,6 +212,10 @@ export function genFor(
   altGen?: Function,
   altHelper?: string
 ): string {
+  // for: string;         // items名字
+  // alias: string;       // item
+  // iterator1?: string;  // index或者key
+  // iterator2?: string;  // 如果是对象的话，就是index
   const exp = el.for
   const alias = el.alias
   const iterator1 = el.iterator1 ? `,${el.iterator1}` : ''
