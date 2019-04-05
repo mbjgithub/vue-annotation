@@ -60,6 +60,7 @@ export function _createElement (
     return createEmptyVNode()
   }
   // object syntax in v-bind
+  // <component is="TestComps"></component>
   if (isDef(data) && isDef(data.is)) {
     tag = data.is
   }
