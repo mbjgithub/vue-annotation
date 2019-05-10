@@ -1,0 +1,55 @@
+<html>
+
+<head>
+  <title>test-compiler</title>
+  <script src="../../dist/vue.js"></script>
+</head>
+
+<body>
+  <div id="app"></div>
+  <script>
+    let template = `
+        <div class="Test" :class="classObj" v-show="isShow">
+          {{username}}:{{password}}
+          <div>
+              <span>hahhahahha</span>
+          </div>
+          <div v-if="isVisiable" @click="onClick"></div>
+          <div v-for="item in items">{{item}}</div>
+        </div>
+    `
+    console.log(Vue.compile(template))
+    let AST = {
+      tag: 'div',
+      type: 1,
+      staticRoot: false,
+      attrsMap: {
+        ':class': "classObj",
+        'class': "Test",
+        'v-show': "isShow"
+      },
+      children: [{
+        text: "          {{username}}:{{password}}          ",
+        type: 2
+      }, {
+        tag: "div",
+        type: 1,
+        staticRoot: true,
+        attrsMap: {},
+        parent: '父对象',
+        children: [{
+          static: true,
+          tag: "span",
+          type: 1,
+          children: [{
+            text: "hahhahahha",
+            type: 3,
+            static: true
+          }]
+        }]
+      }]
+    }
+  </script>
+</body>
+
+</html>

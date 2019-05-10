@@ -256,6 +256,7 @@ export function createPatchFunction(backend) {
       if (isDef(i = i.hook) && isDef(i = i.init)) {
         //执行createElement的时候merge进来的
         //这里面做的事情是调用组件的构造函数，并且给vnode.componentInstance赋值
+        console.log("component init", i)
         i(vnode, false /* hydrating */)   //获取vnode的elm
       }
       // after calling the init hook, if the vnode is a child component
@@ -807,6 +808,7 @@ export function createPatchFunction(backend) {
       const isRealElement = isDef(oldVnode.nodeType)
       if (!isRealElement && sameVnode(oldVnode, vnode)) {
         // patch existing root node
+        console.log("update component")
         patchVnode(oldVnode, vnode, insertedVnodeQueue, removeOnly)
       } else {
         //new Vue的时候oldVNode就是realElement

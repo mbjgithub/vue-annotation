@@ -168,6 +168,7 @@ export function defineReactive(
     configurable: true,
     get: function reactiveGetter() {
       const value = getter ? getter.call(obj) : val
+      console.log("get", key, value)
       // 执行render的时候会导致属性的get函数被调用
       if (Dep.target) {
         // 将当前组件渲染时用到的某个state所对应的dep跟组件对应的watcher绑定，如果没有用到，不会绑定，这个watcher包含当前组件对应

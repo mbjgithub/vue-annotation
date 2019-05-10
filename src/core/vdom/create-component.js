@@ -33,10 +33,10 @@ import {
 } from 'weex/runtime/recycle-list/render-component-template'
 
 // inline hooks to be invoked on component VNodes during patch
-// 组件vnode的hook
+// 自定义组件vnode的hook
 const componentVNodeHooks = {
   /**
-   * 创建component实例
+   * 创建component实例，并且挂载到parentElement上
    * @param {*} vnode
    * @param {*} hydrating
    */
@@ -206,6 +206,7 @@ export function createComponent(
   }
 
   // install component management hooks onto the placeholder node
+  // 是在这里将vnode中的init方法挂载上去的
   installComponentHooks(data)
 
   // return a placeholder vnode
@@ -247,6 +248,7 @@ export function createComponentInstanceForVnode(
     options.render = inlineTemplate.render
     options.staticRenderFns = inlineTemplate.staticRenderFns
   }
+  console.log("createComponentInstanceForVnode")
   return new vnode.componentOptions.Ctor(options)   //调用组件构造函数
 }
 
