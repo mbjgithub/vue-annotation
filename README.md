@@ -470,3 +470,52 @@ vm.__proto__.username，也就是访问vm.__proto__.username的get，get里面�
 2. 被key过的节点，如果key值发生了改变，在re-render的时候，会重新根据新的vnode生成element，不会跟老的vnode进行diff
 
 编译后的结果只有在具体的上下文中才能发挥效力
+
+
+/* @flow */
+// MVVM model，view，view-model
+/**
+ * 定义vnode patch所需要的nodeOps，如果是其他平台，可自行定义这些元素的操作方法，对于web来说nodeOps是要创建真正的dom对象
+ * 定vnode patch所需要的modules，对于web来说，modules是用来操作dom属性的方法
+ *
+ * 1、总结下，web平台为了复用vue的core和compiler，做了啥
+ * 提供web平台需要的工具方法
+ * 提供web平台的指令语法糖
+ * 提供web平台特有的用于做动画的组件
+ * 提供$mount函数
+ * 提供vnode patch所需要的nodeOps和modules
+ * 提供使用vue的compiler所需参数，比如style，class和v-model等需要编译成什么样
+ *
+ * 所以，如果想开发其他的平台的框架，可复用vue的runtime，提供上述专有的方法就好，比如weex平台，又如hippy-vue
+ *
+ * 2、总结下，vue的core和compiler需要哪些输入才能正常复用
+ *
+ * 3、总结下，vue的core到底干啥了，就是你用他这个core可以装什么逼
+ * 组件化
+ * 指令特性
+ * 状态响应式，更新状态，即可更新对应UI
+ * 生命周期
+ * 通过vnode获取UI，diff更新UI
+ * 从vnode到UI，递归，从状态变更到到重新执行render生成newVnode，在到diff，在到更新UI
+ *
+ * 4、总结下，vue的compiler到底干啥了，就是你用他这个compiler可以装什么逼
+ * 定义了模板语法
+ * 将模板语法编译成render和renderStatic函数，render函数可以生成vnode
+ * 提供接口，可以做定制化的编译，详细请看web的compiler是怎么获取定制化编译能力的
+ * props down，event up
+ * 从template到render函数
+ */
+// 牛顿总是说自己发现万有引力是站在巨人的肩膀上，但能爬到巨人的肩膀上也实属不易
+
+
+/**
+ * Vue.component其实是对Vue类的继承，返回一个继承后的构造函数，并配置好组件名对应这个构造函数，构造函数上挂有传入的options，
+ * 便于解析到组件的时候调用这个构造函数创建组件，
+ * 自定义组件是继承自Vue的构造函数，内置组件是一个对象
+ */
+
+/**
+ * core/global-api
+ * 初始换Vue.config和Vue的全局api，Vue的内置组件KeepAlive
+ * Vue.config，Vue.options，Vue.use，Vue.mixin，Vue.component，Vue.directive，Vue.filter
+ */
