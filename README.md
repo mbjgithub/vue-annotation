@@ -189,6 +189,7 @@ Observer====>Dep====>Watcher
 
 看到Vue.prototype._render，给vm上挂在render-helper
 
+### 模板生成详细vnode
 ```
 <!-- 模板 -->
 <div>
@@ -258,7 +259,7 @@ Observer====>Dep====>Watcher
   }]
 }
 ```
-
+### 模板=》vnode关系树；模板=》vm关系树
 假定有如下结构的模板
 ```
 // new Vue的template，对应的实例记为vm1
@@ -435,10 +436,41 @@ vnode是虚拟node节点，是具体平台元素对象的进一步抽象，每�
 （7）如果是oldChildrenVnodes的最左节点与最右节点先重合，说明newChildrenVNodes还有节点没有被插入，递归创建这些节点对应元素，然后插入到oldChildrenVnodes的最左节点的右边或者最右节点的左边，因为是从两者的开始和结束位置向中间靠拢，想想，如果newChildrenVNodes剩余的第一个节点与oldChildrenVnodes的最左边节点为sameVnode的话，位置是不用变的
 （8）如果是newChildrenVnodes的最左节点与最右节点先重合，说明oldChildrenVnodes中有一段结构没有被复用，开始和结束位置向中间靠拢，因此没有被复用的位置是oldChildrenVnodes的最左边和最右边节点，删除节点对应的elm即可
 
+### 自定义组件如何渲染，父组件数据如何传入子组件
+```
+假定下面为ParentComps组件的模板
+<div>-----------------------vnode1
+  <span></span>-------------vnode2
+  <TestComps :username="username"
+             :password="password"></TestComps>    ---vnode3  然而是一个占位符
+  <p></p>-------------------vnode4
+</div>
+```
+1. 执行ParentComps的render函数，分别生成vnode1，vnode2，vnode3，vnode4
+2. 自定义组件TestComps的vnode3的componentOptions里面包含ParentComps
+传给TestComps的propsData，以及事件定义（propsData是在执行渲染函数的时候生成，可以参考上述 模板生成详细vnode），然后会组成一个如下对象传递给TestComps的构造函数，并与组件options（我们需要知道组件的options会被挂载在构造函数上），global options合并
+```
+ {
+  parent: ParentComps组件实例,
+  _isComponent: true,
+  _parentVnode:vnode3
+ }
+```
+3. 构造函数执行的时候就会使用propsData，以上面的TestComps举例，具体使用如下：
+构造函数的prototype上挂载props的所有值，然后在vm上重新定义username和password。访问vm.username，其实就是访问
+vm.__proto__.username，也就是访问vm.__proto__.username的get，get里面的实现是访问vm._props.username，
+在执行构造函数的过程中，在vm上挂载_props对象，它属性来源于props，值来源于propsData，通过defineProperty定义
+因此vm._props.username所获取的值就是propsData提供的值，这解释了“父组件数据如何传入子组件”
+
+4. 然后执行TestComps的render函数，生成TestComps对应模板的所有vnode，并通过这些vnode渲染出对应element
 
 ### 从源码看出的优化点
 1. 组件越小越好，特别是列表渲染，列表项最好做出组件的形式，这样state变化造成的改变是最小的，比如你改变列表项某个state值，那么最终更新的就是使用了这个state的组件，其他的组件不会被通知到更新，来自watcher
+
 2. beforeCreate和created生命周期里面变动的state不会导致re-redner，因为那时候组件还没有绑定watcher
+
+3. 被key过的节点，如果key值发生了改变，在re-render的时候，会重新根据新的vnode生成element，不会跟老的vnode进行diff
+
 
 编译后的结果只有在具体的上下文中才能发挥效力
 

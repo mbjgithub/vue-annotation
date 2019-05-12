@@ -41,6 +41,7 @@ export function initMixin(Vue: Class<Component>) {
     vm._isVue = true
     // merge options
     //这里通过mergeOptions生成的$options跟传入的options相比，有了很大变动
+    // 如果是自定义组件的话
     if (options && options._isComponent) {
       // optimize internal component instantiation
       // since dynamic options merging is pretty slow, and none of the
@@ -86,9 +87,15 @@ export function initMixin(Vue: Class<Component>) {
     }
   }
 }
-
+/**
+* {
+* parent: 父组件实例,
+* _isComponent: true
+* _parentVnode:占位自定义组件vnode，用于传递一些props，event等事件
+* }
+ */
 export function initInternalComponent(vm: Component, options: InternalComponentOptions) {
-  const opts = vm.$options = Object.create(vm.constructor.options)   // opts是自定义组件传入的options
+  const opts = vm.$options = Object.create(vm.constructor.options)// opts是自定义组件传入的options和globaloptions的合并
   // doing this because it's faster than dynamic enumeration.
   const parentVnode = options._parentVnode  //自定义组件vnode
   opts.parent = options.parent   //自定义组件所在的父组件实例

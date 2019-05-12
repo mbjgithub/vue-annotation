@@ -1,0 +1,81 @@
+<html>
+
+<head>
+  <title>test-compiler</title>
+  <script src="../../dist/vue.js"></script>
+</head>
+
+<body>
+  <div id="app"></div>
+  <script>
+    let template = `
+        <div class="Test" v-show="isShow" :key="skey">
+          {{person.username}}:{{person.password}}
+          <div>
+              <span>hahhahahha</span>
+          </div>
+          <div v-if="isVisiable" @click="onClick"></div>
+          <div v-for="item in items.vecItem">{{item}}</div>
+          <div v-for="item in vecArr">{{item}}</div>
+          <button @click="setPerson">设置person</button>
+          <button @click="setVecItem">设置VecItem</button>
+          <button @click="setVecArr">设置VecArr</button>
+          <button @click="changeSkey">改变skey</button>
+          <Sub1 :skey="skey" />
+        </div>
+    `
+    Vue.component('Sub1', {
+      props: ['skey'],
+      template: `
+        <div>
+          <Sub2 :skey="skey" />
+        </div>
+      `
+    })
+    Vue.component('Sub2', {
+      props: ['skey'],
+      template: `
+        <div>
+          <span>消费key:{{skey}}</span>
+        </div>
+      `
+    })
+    new Vue({
+      el: "#app",
+      template,
+      data() {
+        return {
+          skey: "skey",
+          isShow: true,
+          person: {},
+          isVisiable: true,
+          items: {},
+          vecArr: []
+        }
+      },
+      methods: {
+        onClick() {
+
+        },
+        setPerson() {
+          this.person = { username: 'aliarmo' }
+          this.items.vecItem = ["2334", "34444444"]
+        },
+        setVecItem() {
+          // this.person.username = "wmy"
+          this.items.vecItem.push("44444444")
+        },
+        setVecArr() {
+          console.log('arr push', this.vecArr.push)
+          this.vecArr.push("33333333333")
+        },
+        changeSkey() {
+          this.skey = Math.random()
+        }
+      },
+    })
+
+  </script>
+</body>
+
+</html>

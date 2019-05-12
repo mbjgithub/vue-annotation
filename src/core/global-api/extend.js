@@ -18,6 +18,7 @@ export function initExtend(Vue: GlobalAPI) {
 
   /**
    * Class inheritance,所以说如果用Vue.extend会创造出一个继承自Vue的新类
+   * extendOptions是在定义Vue组件的时候传入的参数
    */
   Vue.extend = function (extendOptions: Object): Function {
     extendOptions = extendOptions || {}
@@ -34,7 +35,16 @@ export function initExtend(Vue: GlobalAPI) {
       validateComponentName(name)
     }
 
+    /**
+     * @param {占位自定义组件提供的options} options
+     * {
+     * parent: 父组件实例,
+     * _isComponent: true
+     * _parentVnode:占位自定义组件vnode，用于传递一些props，event等事件
+     * }
+     */
     const Sub = function VueComponent(options) {
+      console.log("placeholder component options", options)
       this._init(options)
     }
     Sub.prototype = Object.create(Super.prototype)
@@ -50,7 +60,11 @@ export function initExtend(Vue: GlobalAPI) {
     // For props and computed properties, we define the proxy getters on
     // the Vue instances at extension time, on the extended prototype. This
     // avoids Object.defineProperty calls for each instance created.
-    //TODO
+    // 在vm上挂载props，vm.username访问的其实是prototype上的username，其实是访问的vm._props.username，
+    // 后面在initProps的时候，会在vm上挂载_props，
+    // _props上的属性是响应式的，因此，vm.username的访问路径是：
+    // vm.username的get，get里面返回的就是vm._props.username，那就会访问vm._props.username的get，就会进行依赖收集
+    // 还真是曲折呀，set是一样的
     if (Sub.options.props) {
       initProps(Sub)
     }
