@@ -55,7 +55,7 @@ export function initMixin(Vue: Class<Component>) {
         vm
       )
     }
-    console.log('vm.$options', vm.$options)
+    // console.log('vm.$options', vm.$options)
     /* istanbul ignore else */
     //非生产环境下用es6的Proxy代理vm，便于访问vm的非法属性时做出提示
     if (process.env.NODE_ENV !== 'production') {
@@ -72,7 +72,7 @@ export function initMixin(Vue: Class<Component>) {
     initInjections(vm) // resolve injections before data/props，provide 和 inject 主要为高阶插件/组件库提供用例。并不推荐直接用于应用程序代码中。
     initState(vm)      //初始化状态，props，methods，computed，data，watch，并加上Observe，做一些合法性校验
     initProvide(vm) // resolve provide after data/props
-    callHook(vm, 'created')    //所以调用created回调的时候属性已经是响应式的了
+    callHook(vm, 'created')    //所以调用created回调的时候属性已经是响应式的了,但是还没有watcher体系，所以created里面改变的state，并不会导致re-redner
 
     /* istanbul ignore if */
     if (process.env.NODE_ENV !== 'production' && config.performance && mark) {

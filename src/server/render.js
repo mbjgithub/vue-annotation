@@ -391,6 +391,7 @@ export function createRenderFunction (
     })
     installSSRHelpers(component)
     normalizeRender(component)
+    console.log(component._render())
     renderNode(component._render(), true, context)
   }
 }

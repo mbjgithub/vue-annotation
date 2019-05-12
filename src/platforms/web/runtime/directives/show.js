@@ -1,6 +1,7 @@
 /* @flow */
 /**
  * 定义web平台的v-show，简单切换元素的display属性
+ * 在创建了具体平台元素后，更新元素的module的时候会调用这些钩子函数
  */
 import { enter, leave } from '../modules/transition'
 
