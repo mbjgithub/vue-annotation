@@ -58,10 +58,12 @@ Dep.target = null
 const targetStack = []
 
 export function pushTarget(_target: ?Watcher) {
+  console.log("pushTarget", targetStack, _target)
   if (Dep.target) targetStack.push(Dep.target)
   Dep.target = _target
 }
 
 export function popTarget() {
+  console.log("popTarget", targetStack)
   Dep.target = targetStack.pop()
 }

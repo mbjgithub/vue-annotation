@@ -60,7 +60,7 @@ const componentVNodeHooks = {
     }
   },
   /**
-   * vnode patch之前会调用
+   * 如果vnode是自定义组件vnode，那么在patch之前会调用prepatch，目的是更新子组件
    * @param {*} oldVnode
    * @param {*} vnode
    */

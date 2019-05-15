@@ -74,6 +74,8 @@ function initProps(vm: Component, propsOptions: Object) {
   if (!isRoot) {
     toggleObserving(false)
   }
+  // 注意这里是浅遍历，如果属性值是对象的话，不会被递归遍历在defineReactive一遍
+  // 因为父组件已经定义过了，依赖的收集也取决于执行渲染函数时模板中是否使用
   for (const key in propsOptions) {
     keys.push(key)
     const value = validateProp(key, propsOptions, propsData, vm)

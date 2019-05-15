@@ -195,6 +195,7 @@ export default class Watcher {
    */
   update() {
     /* istanbul ignore else */
+    console.log('watcher update')
     if (this.lazy) {
       this.dirty = true
     } else if (this.sync) {

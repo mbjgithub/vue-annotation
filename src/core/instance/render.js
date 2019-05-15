@@ -47,7 +47,7 @@ export function initRender(vm: Component) {
       !isUpdatingChildComponent && warn(`$listeners is readonly.`, vm)
     }, true)
   } else {
-    //为什么要在当前组件实例上定义这些响应式属性并且值是父组件的
+    //子组件实例上挂在占位组件的attrs
     //浅watch
     defineReactive(vm, '$attrs', parentData && parentData.attrs || emptyObject, null, true)
     defineReactive(vm, '$listeners', options._parentListeners || emptyObject, null, true)

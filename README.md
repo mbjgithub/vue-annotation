@@ -340,8 +340,9 @@ vm2={
 ### Vue Watcher体系
 #### 整个体系的建立过程：
 1、创建组件实例的时候会对data和props进行observer，
-2、observer会遍历state对state所包含属性重新定义，即defineReactive，重新设定属性描述符的get和set
-3、在mountComponent的时候，会new Wacther，当前watcher实例会被pushTarget，设定为目标watcher，然后执行vm._update(vm._render(), hydrating)，执行render函数导致属性的get函数被调用，每个属性会有一个dep实例，每个dep实例关联到组件对应的watcher，关联后popTarget。
+2、对传入的props进行浅遍历，重新设定属性的属性描述符get和set，如果props的某个属性值为对象，那么这个对象在父组件是被深度observe过的，所以props是浅遍历
+2、observer会深度遍历data，对data所包含属性重新定义，即defineReactive，重新设定属性描述符的get和set
+3、在mountComponent的时候，会new Wacther，当前watcher实例会被pushTarget，设定为目标watcher，然后执行vm._update(vm._render(), hydrating)，执行render函数导致属性的get函数被调用，每个属性会对应一个dep实例，在这个时候，dep实例关联到组件对应的watcher，实现依赖收集，关联后popTarget。
 4、如果有子组件，会导致子组件的实例化，重新执行上述步骤
 #### state变动响应过程：
 1、当state变动后，调用属性描述符的set函数，dep会通知到关联的watcher进入到nextTick任务里面，这个watcher实例的run函数包含vm._update(vm._render(), hydrating)，执行这个run函数，导致重新生成vnode，进行patch，经过diff，达到更新UI目的
@@ -431,10 +432,10 @@ vnode是虚拟node节点，是具体平台元素对象的进一步抽象，每�
 （2）如果不是（1）所述case，取两者最右边的节点，跟（1）的判定流程一样，不过是最右边节点位置向前移动一步
 （3）如果不是（1）（2）所述case，取oldChildrenVnodes最左边节点和newChildrenVnodes最右边节点，跟（1）的判定流程一样，不过，elm的位置需要移动到oldVnode最右边elm的右边，因为vnode取的是最右边节点，如果与oldVnode的最右边节点是sameVnode的话，位置是不用改变的，因此newChildrenVnodes的最右节点和oldChildrenVnodes的最右节点位置是对应的，但由于是复用的oldChildrenVnodes的最左边节点，oldChildrenVnodes最右边节点还没有被复用，因此不能替换掉，所以移动到oldChildrenVnodes最右边elm的右边。然后oldChildrenVnodes最左边节点位置向前移动一步，newChildrenVnodes最右边节点位置向前移动一步
 （4）如果不是（1）（2）（3）所述case，取oldChildrenVnodes最右边节点和newChildrenVnodes最左边节点，跟（1）的判定流程一样，不过，elm的位置需要移动到oldChildrenVnodes最左边elm的左边，因为vnode取的是最左边节点，如果与oldChildrenVnodes的最左边节点是sameVnode的话，位置是不用改变的，因此newChildrenVnodes的最左节点和oldChildrenVnodes的最左节点位置是对应的，但由于是复用的oldChildrenVnodes的最右边节点，oldChildrenVnodes最左边节点还没有被复用，因此不能替换掉，所以移动到oldChildrenVnodes最左边elm的左边。然后oldChildrenVnodes最右边节点位置向前移动一步，newChildrenVnodes最左边节点位置向前移动一步
-（5）如果不是（1）（2）（3）（4）所述case，在oldChildrenVnodes中寻找与newChildrenVnodes最左边节点是sameVnode的oldVnode，跟（1）的判定流程一样，不过插入的位置是oldChildrenVnodes的最左边节点的左边，因为如果newChildrenVnodes最左边节点与oldChildrenVnodes最左边节点是sameVnode的话，位置是不用变的，并且复用的是oldChildrenVnodes中找到的oldVNode的elm。被复用过的oldVnode后面不会再被取出来。然后newChildrenVnodes最左边节点位置向前移动一步
+（5）如果不是（1）（2）（3）（4）所述case，在oldChildrenVnodes中寻找与newChildrenVnodes最左边节点是sameVnode的oldVnode，如果没有找到，则用这个新的vnode创建一个新element，插入位置如后所述，如果找到了，则跟（1）的判定流程一样，不过插入的位置是oldChildrenVnodes的最左边节点的左边，因为如果newChildrenVnodes最左边节点与oldChildrenVnodes最左边节点是sameVnode的话，位置是不用变的，并且复用的是oldChildrenVnodes中找到的oldVNode的elm。被复用过的oldVnode后面不会再被取出来。然后newChildrenVnodes最左边节点位置向前移动一步
 （6）经过上述步骤，oldChildrenVnodes或者newChildrenVnodes的最左节点与最右节点重合，退出循坏
 （7）如果是oldChildrenVnodes的最左节点与最右节点先重合，说明newChildrenVNodes还有节点没有被插入，递归创建这些节点对应元素，然后插入到oldChildrenVnodes的最左节点的右边或者最右节点的左边，因为是从两者的开始和结束位置向中间靠拢，想想，如果newChildrenVNodes剩余的第一个节点与oldChildrenVnodes的最左边节点为sameVnode的话，位置是不用变的
-（8）如果是newChildrenVnodes的最左节点与最右节点先重合，说明oldChildrenVnodes中有一段结构没有被复用，开始和结束位置向中间靠拢，因此没有被复用的位置是oldChildrenVnodes的最左边和最右边节点，删除节点对应的elm即可
+（8）如果是newChildrenVnodes的最左节点与最右节点先重合，说明oldChildrenVnodes中有一段结构没有被复用，开始和结束位置向中间靠拢，因此没有被复用的位置是oldChildrenVnodes的最左边和最右边之间节点，删除节点对应的elm即可
 
 ### 自定义组件如何渲染，父组件数据如何传入子组件
 ```
@@ -463,6 +464,33 @@ vm.__proto__.username，也就是访问vm.__proto__.username的get，get里面�
 因此vm._props.username所获取的值就是propsData提供的值，这解释了“父组件数据如何传入子组件”
 
 4. 然后执行TestComps的render函数，生成TestComps对应模板的所有vnode，并通过这些vnode渲染出对应element
+
+### 父组件state变化如何导致子组件也发生变化
+1. 父组件state更新后，会导致渲染函数重新执行，生成新的vnode，在oldVnode和newVnode patch的过程中，如果遇到的是组件vnode，会updateChildrenComponent，这里面做的操作就是更新子组件的props，因为子组件是有监听props属性的变动的，导致子组件re-render
+
+### 父组件传入一个对象给子组件，子组件改变传入的对象props，父组件又是如何被更新到的
+```
+// 假定父组件传person对象给子组件SubComps
+Vue.component('ParentComps',{
+  data(){
+    return {
+      person:{
+        username:'aliarmo',
+        pwd:123
+      }
+    }
+  },
+  template:`
+    <div>
+      <p>{{person.username}}</p>
+      <SubComps :person="person" />
+    </div>
+  `
+})
+```
+大前提：如果父组件传给子组件的props中有对象，那么子组件接收到的是这个对象的引用。也就是ParentComps中的this.person和SubComps中的this.person指向同一个对象
+现在我们在SubComps里面，更新person对象的某个属性,如：this.person.username='wmy'
+这样会导致ParentComps和SubComps的更新，为什么呢？因为Vue在ParentComps中会深度递归观察对象的每个属性，在第一次执行ParentComps的render的时候，绑定ParentComps的Watcher，传入到SubComps后，不会对传入的对象在进行观察，在第一次执行SubComps的render的时候，会绑定到SubComps的Watcher，因此当SubComps改变了this.person.username的值，会通知到两个Watcher，导致更新。这很好的解释了凭空在传入的props属性对象上挂载新的属性不触发渲染，因为传入的props属性对象是在父组件被观察的
 
 ### 从源码看出的优化点
 1. 组件越小越好，特别是列表渲染，列表项最好做出组件的形式，这样state变化造成的改变是最小的，比如你改变列表项某个state值，那么最终更新的就是使用了这个state的组件，其他的组件不会被通知到更新，来自watcher
@@ -522,3 +550,5 @@ vm.__proto__.username，也就是访问vm.__proto__.username的get，get里面�
  * 初始换Vue.config和Vue的全局api，Vue的内置组件KeepAlive
  * Vue.config，Vue.options，Vue.use，Vue.mixin，Vue.component，Vue.directive，Vue.filter
  */
+
+### 总述，如何将所有关键要素联系起来，实现Vue那些激动人心的功能

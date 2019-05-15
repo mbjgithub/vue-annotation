@@ -268,7 +268,7 @@ export function updateChildComponent(
     vm._vnode.parent = parentVnode
   }
   vm.$options._renderChildren = renderChildren
-
+  console.log('updateChildComponent')
   // update $attrs and $listeners hash
   // these are also reactive so they may trigger child update if the child
   // used them during render
