@@ -12,8 +12,26 @@
         <div class="Test" v-show="isShow" :key="skey">
           person.username:{{person.username}}
           <Sub1 :person1="person" />
+          <p v-haha="hahaVal"></p>
         </div>
     `
+    Vue.directive('haha', {
+      bind(el, bindind, vnode, oldVnode) {
+        console.log('directives bind')
+      },
+      inserted() {
+        console.log('directives inserted')
+      },
+      update() {
+        console.log('directives update')
+      },
+      componentUpdated() {
+        console.log('directives componentUpdated')
+      },
+      unbind() {
+        console.log('directives unbind')
+      }
+    })
     Vue.component('Sub1', {
       props: ['person1'],
       methods: {
@@ -42,6 +60,7 @@
       template,
       data() {
         return {
+          hahaVal: 'self directive',
           skey: "skey",
           isShow: true,
           person: { username: 'aliarmo', pwd: '123' },

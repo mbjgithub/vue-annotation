@@ -89,7 +89,7 @@ export function createPatchFunction(backend) {
     cbs[hooks[i]] = []
     for (j = 0; j < modules.length; ++j) {
       if (isDef(modules[j][hooks[i]])) {
-        cbs[hooks[i]].push(modules[j][hooks[i]]) //将所有的hooks[i]放入cbshooks[i]
+        cbs[hooks[i]].push(modules[j][hooks[i]]) //将所有的hooks[i]放入cbs.hooks[i]
       }
     }
   }
@@ -351,6 +351,7 @@ export function createPatchFunction(backend) {
   // 给元素附加特性，如类名，事件绑定，调用生成这些属性的crate方法
   // 调用vnode.data.hook里面的create和insert
   function invokeCreateHooks(vnode, insertedVnodeQueue) {
+    console.log("invokeCreateHooks")
     for (let i = 0; i < cbs.create.length; ++i) {
       cbs.create[i](emptyNode, vnode)
     }

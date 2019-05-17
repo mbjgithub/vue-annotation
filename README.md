@@ -492,6 +492,9 @@ Vue.component('ParentComps',{
 现在我们在SubComps里面，更新person对象的某个属性,如：this.person.username='wmy'
 这样会导致ParentComps和SubComps的更新，为什么呢？因为Vue在ParentComps中会深度递归观察对象的每个属性，在第一次执行ParentComps的render的时候，绑定ParentComps的Watcher，传入到SubComps后，不会对传入的对象在进行观察，在第一次执行SubComps的render的时候，会绑定到SubComps的Watcher，因此当SubComps改变了this.person.username的值，会通知到两个Watcher，导致更新。这很好的解释了凭空在传入的props属性对象上挂载新的属性不触发渲染，因为传入的props属性对象是在父组件被观察的
 
+### 指令
+指令在Vue中是具有特定含义的属性，指令分两类，一类是编译时处理，在生成的render函数上体现，如：v-if，v-for，另外一类是运行时使用，更多的是对生成的具体平台元素操作，web平台的话就是对dom的操作
+
 ### 从源码看出的优化点
 1. 组件越小越好，特别是列表渲染，列表项最好做出组件的形式，这样state变化造成的改变是最小的，比如你改变列表项某个state值，那么最终更新的就是使用了这个state的组件，其他的组件不会被通知到更新，来自watcher
 
@@ -551,4 +554,13 @@ Vue.component('ParentComps',{
  * Vue.config，Vue.options，Vue.use，Vue.mixin，Vue.component，Vue.directive，Vue.filter
  */
 
-### 总述，如何将所有关键要素联系起来，实现Vue那些激动人心的功能
+### core总述
+现在我们终于可以理一下，从new Vue()开始，core里面发生了些什么
+1. new Vue()或者new自定义组件构造函数（继承自Vue）
+2. 初始化，props，methods，computed，data，watch，并给state加上Observe，调用生命周期created
+3. 开始mount组件，mount之前确保render函数的生成
+4. new Watcher，导致render和patch，注意一个watcher对应一个组件，watcher对变化的响应是重新执行render生成vnode进行patch
+5. render在当前组件上下文（组件实例）执行，生成对应的vnode结构
+6. 如果没有oldVnode，那patch就是深度遍历vnode，生成具体的平台元素，给具体的平台元素添加属性和绑定事件，调用自定义指令提供的钩子函数，并append到已存在的元素上，在遍历的过程中，如果遇到的是自定义组件，则从**步骤1**开始重复
+7. 如果有oldVnode，那patch就是利用vnode diff算法在原有的平台元素上进行修修补补，不到万不得已不创建新的平台元素
+8. state发生变化，通知到state所在组件对应的watcher，重新执行render生成vnode进行patch，也就是回到**步骤4**
